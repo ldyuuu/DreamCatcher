@@ -53,7 +53,7 @@ class Repository(private val userDao: UserDao, private val dreamDao: DreamDao) {
 
     fun findDreamsByDate(date: String) {
         coroutineScope.launch(Dispatchers.Main) {
-            searchDreamResults.value = asyncFindDreamsByDate(date).await()
+            searchDreamResults.value = asyncFindDreamsByDate(date).await() ?: emptyList()
         }
     }
 

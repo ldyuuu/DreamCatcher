@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.devtoolsKsp)
 }
 
+
 android {
     namespace = "com.example.dreamcatcher"
     compileSdk = 34
@@ -19,6 +20,11 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+//        val huggingFaceApiKey: String = providers.gradleProperty("HUGGINGFACE_API_KEY").getOrElse("")
+        val huggingFaceApiKey: String = "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"
+        println("HUGGINGFACE_API_KEY: $huggingFaceApiKey")
+        buildConfigField("String", "HUGGINGFACE_API_KEY", "\"$huggingFaceApiKey\"")
     }
 
     buildTypes {
@@ -39,6 +45,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
@@ -79,5 +86,6 @@ dependencies {
     implementation ("com.squareup.retrofit2:retrofit:2.9.0")
     implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
 
+    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
 
 }

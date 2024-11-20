@@ -47,6 +47,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainApp() {
     val navController = rememberNavController()
+
+    // Navigation setup
     NavHost(navController = navController, startDestination = "main_menu") {
         composable("main_menu") { MainMenu(navController) }
         composable("mic_test") { MicTestScreen(navController) }
@@ -63,6 +65,82 @@ fun GreetingPreview() {
     }
 }
 
+
+@Composable
+fun MainScreen(viewModel: MainViewModel) {
+    val allUsers by viewModel.allUsers.observeAsState(emptyList()) // 观察所有用户
+    val userName = remember { mutableStateOf("") }
+    val userEmail = remember { mutableStateOf("") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // 输入新用户的名字
+        OutlinedTextField(
+            value = userName.value,
+            onValueChange = { userName.value = it },
+            label = { Text("User Name") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // 输入新用户的邮箱
+        OutlinedTextField(
+            value = userEmail.value,
+            onValueChange = { userEmail.value = it },
+            label = { Text("User Email") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 添加用户按钮
+        Button(
+            onClick = {
+                if (userName.value.isNotEmpty() && userEmail.value.isNotEmpty()) {
+                    val newUser = User(email = userEmail.value, displayName = userName.value
+                    , passwordHash = "", preferences = "")
+                    viewModel.addUser(newUser)
+                    userName.value = ""
+                    userEmail.value = ""
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Add User")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 显示所有用户
+        Text("All Users:", style = MaterialTheme.typography.bodyLarge)
+        LazyColumn {
+            items(allUsers) { user ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(text = "Name: ${user.displayName}")
+                        Text(text = "Email: ${user.email}")
+                    }
+
+                    // 删除按钮
+                    Button(onClick = { viewModel.removeUser(user) }) {
+                        Text("Delete")
+                    }
+                }
+            }
+        }
+    }
+}
 class MainViewModelFactory(val application: Application) :
     ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {

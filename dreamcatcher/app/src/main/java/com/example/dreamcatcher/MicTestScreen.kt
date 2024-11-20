@@ -1,6 +1,7 @@
 package com.example.dreamcatcher
 
 import android.Manifest
+import android.util.Log
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -21,17 +22,39 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 
+import com.example.dreamcatcher.network.HuggingFaceRequest
+import com.example.dreamcatcher.network.HuggingFaceResponse
+import com.example.dreamcatcher.network.RetrofitInstance
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
 @Composable
 fun MicTestScreen(navController: NavHostController) {
     val context = LocalContext.current
     val spokenTextState = remember { mutableStateOf("Press the microphone to speak") }
+    val emotionResultState = remember { mutableStateOf("Waiting for emotion analysis...") }
 
     val speechRecognizerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == ComponentActivity.RESULT_OK && result.data != null) {
             val matches = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
-            spokenTextState.value = matches?.get(0) ?: "No input detected"
+            val spokenText = matches?.get(0) ?: "No speech detected"
+            spokenTextState.value = spokenText
+
+            emotionResultState.value = "Analyzing emotion..."
+            fetchEmotion(spokenText) { emotionResponses ->
+                if (emotionResponses.isNotEmpty()) {
+                    val resultText = emotionResponses.joinToString("\n") {
+                        "${it.label}: ${(it.score * 100).toInt()}%"
+                    }
+                    emotionResultState.value = resultText
+                } else {
+                    emotionResultState.value = "Failed to analyze emotion. Please try again."
+                }
+            }
         } else {
             spokenTextState.value = "Didn't catch that. Please try again."
         }
@@ -46,6 +69,13 @@ fun MicTestScreen(navController: NavHostController) {
     ) {
         Text(
             text = spokenTextState.value,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        )
+
+        Text(
+            text = emotionResultState.value,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
@@ -84,9 +114,8 @@ fun MicTestScreen(navController: NavHostController) {
             Text("Speak Now")
         }
 
-        // Back Button
         Button(
-            onClick = { navController.navigate("main_menu") }, // Navigate back to the main menu
+            onClick = { navController.navigate("main_menu") },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
@@ -95,3 +124,29 @@ fun MicTestScreen(navController: NavHostController) {
         }
     }
 }
+
+
+fun fetchEmotion(inputText: String, onResult: (List<HuggingFaceResponse>) -> Unit) {
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
+            Log.d("HuggingFace", "Sending text to Hugging Face API: $inputText")
+
+            val response = RetrofitInstance.api.analyzeEmotion(
+                authToken = "Bearer ${BuildConfig.HUGGINGFACE_API_KEY}",
+                request = HuggingFaceRequest(inputs = inputText)
+            )
+
+            val flattenedResponse = response.flatten()
+            Log.d("HuggingFace", "Hugging Face Response: $response")
+            withContext(Dispatchers.Main) {
+                onResult(flattenedResponse)
+            }
+        } catch (e: Exception) {
+            Log.e("HuggingFace", "Error during Hugging Face API request: ${e.message}")
+            withContext(Dispatchers.Main) {
+                onResult(emptyList())
+            }
+        }
+    }
+}
+
