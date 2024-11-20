@@ -53,6 +53,7 @@ fun MainApp() {
         composable("main_menu") { MainMenu(navController) }
         composable("mic_test") { MicTestScreen(navController) }
         composable("db_test") { DatabaseTestScreen(navController) }
+        composable("image_generate_test") { ImageGenerateTest() }
     }
 }
 

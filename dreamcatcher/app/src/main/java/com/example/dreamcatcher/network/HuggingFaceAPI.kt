@@ -10,7 +10,7 @@ data class HuggingFaceResponse(val label: String, val score: Float)
 interface HuggingFaceAPI {
     @POST("models/j-hartmann/emotion-english-distilroberta-base")
     suspend fun analyzeEmotion(
-        @Header ("Authorization") authToken: String,
+//        @Header ("Authorization") authToken: String,
         @Body request: HuggingFaceRequest
     ): List<List<HuggingFaceResponse>>
 }

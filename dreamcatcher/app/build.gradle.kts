@@ -1,3 +1,5 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid) 
@@ -17,14 +19,14 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables {
-            useSupportLibrary = true
-        }
+        vectorDrawables {useSupportLibrary = true}
 
-        val huggingFaceApiKey: String = providers.gradleProperty("HUGGINGFACE_API_KEY").getOrElse("")
-//
-        println("HUGGINGFACE_API_KEY: $huggingFaceApiKey")
+        val localProperties = gradleLocalProperties(rootDir,providers)
+        val huggingFaceApiKey = localProperties.getProperty("HUGGINGFACE_API_KEY", "")
+        val openAiApiKey = localProperties.getProperty("OPENAI_API_KEY", "")
+
         buildConfigField("String", "HUGGINGFACE_API_KEY", "\"$huggingFaceApiKey\"")
+        buildConfigField("String", "OPENAI_API_KEY", "\"$openAiApiKey\"")
     }
 
     buildTypes {
@@ -87,5 +89,6 @@ dependencies {
     implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
 
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+    implementation("io.coil-kt:coil-compose:2.4.0")
 
 }

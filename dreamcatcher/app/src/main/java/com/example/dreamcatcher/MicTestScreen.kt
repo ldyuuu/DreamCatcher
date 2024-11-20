@@ -130,9 +130,11 @@ fun fetchEmotion(inputText: String, onResult: (List<HuggingFaceResponse>) -> Uni
     CoroutineScope(Dispatchers.IO).launch {
         try {
             Log.d("HuggingFace", "Sending text to Hugging Face API: $inputText")
+            Log.d("HuggingFace", "API Key: ${BuildConfig.HUGGINGFACE_API_KEY}")
 
-            val response = RetrofitInstance.api.analyzeEmotion(
-                authToken = "Bearer ${BuildConfig.HUGGINGFACE_API_KEY}",
+
+            val response = RetrofitInstance.huggingFaceAPI.analyzeEmotion(
+//                authToken = "Bearer ${BuildConfig.HUGGINGFACE_API_KEY}",
                 request = HuggingFaceRequest(inputs = inputText)
             )
 

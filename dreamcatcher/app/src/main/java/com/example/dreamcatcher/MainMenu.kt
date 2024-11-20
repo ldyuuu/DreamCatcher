@@ -39,5 +39,14 @@ fun MainMenu(navController: NavHostController) {
         ) {
             Text("Test Database")
         }
+
+        Button(
+            onClick = { navController.navigate("image_generate_test") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+        ) {
+            Text("Generate Image")
+        }
     }
 }
