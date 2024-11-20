@@ -21,8 +21,8 @@ android {
             useSupportLibrary = true
         }
 
-//        val huggingFaceApiKey: String = providers.gradleProperty("HUGGINGFACE_API_KEY").getOrElse("")
-        val huggingFaceApiKey: String = "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"
+        val huggingFaceApiKey: String = providers.gradleProperty("HUGGINGFACE_API_KEY").getOrElse("")
+//
         println("HUGGINGFACE_API_KEY: $huggingFaceApiKey")
         buildConfigField("String", "HUGGINGFACE_API_KEY", "\"$huggingFaceApiKey\"")
     }
