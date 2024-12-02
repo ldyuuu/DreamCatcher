@@ -12,11 +12,16 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -31,10 +36,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun MicTestScreen(navController: NavHostController) {
+fun MicRecord(
+    spokenTextState: MutableState<String>,
+    isRecordingState: MutableState<Boolean>
+) {
     val context = LocalContext.current
-    val spokenTextState = remember { mutableStateOf("Press the microphone to speak") }
-    val emotionResultState = remember { mutableStateOf("Waiting for emotion analysis...") }
 
     val speechRecognizerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -43,46 +49,17 @@ fun MicTestScreen(navController: NavHostController) {
             val matches = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
             val spokenText = matches?.get(0) ?: "No speech detected"
             spokenTextState.value = spokenText
-
-            emotionResultState.value = "Analyzing emotion..."
-            fetchEmotion(spokenText) { emotionResponses ->
-                if (emotionResponses.isNotEmpty()) {
-                    val resultText = emotionResponses.joinToString("\n") {
-                        "${it.label}: ${(it.score * 100).toInt()}%"
-                    }
-                    emotionResultState.value = resultText
-                } else {
-                    emotionResultState.value = "Failed to analyze emotion. Please try again."
-                }
-            }
+            isRecordingState.value = false
         } else {
             spokenTextState.value = "Didn't catch that. Please try again."
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.SpaceBetween,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = spokenTextState.value,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        )
-
-        Text(
-            text = emotionResultState.value,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        )
-
+    if (spokenTextState.value == "Press the microphone to speak" || spokenTextState.value.isEmpty()) {
+        // Show button with microphone icon and placeholder text
         Button(
             onClick = {
+                isRecordingState.value = true
                 if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
                     == PackageManager.PERMISSION_GRANTED
                 ) {
@@ -107,23 +84,42 @@ fun MicTestScreen(navController: NavHostController) {
                     )
                 }
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier = Modifier.size(258.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
         ) {
-            Text("Speak Now")
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    painter = painterResource(id = R.drawable.mic),
+                    contentDescription = "Microphone",
+                    modifier = Modifier.size(96.dp),
+                    tint = Color.Unspecified
+                )
+                Text(
+                    text = "Press the microphone to speak",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = 8.dp),
+                    color = Color.Black
+                )
+            }
         }
-
-        Button(
-            onClick = { navController.navigate("main_menu") },
+    } else {
+        // Replace button with spoken text
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Text("Back to Main Menu")
+            Text(
+                text = spokenTextState.value,
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }
+
+
+
 
 
 fun fetchEmotion(inputText: String, onResult: (List<HuggingFaceResponse>) -> Unit) {
@@ -134,7 +130,6 @@ fun fetchEmotion(inputText: String, onResult: (List<HuggingFaceResponse>) -> Uni
 
 
             val response = RetrofitInstance.huggingFaceAPI.analyzeEmotion(
-//                authToken = "Bearer ${BuildConfig.HUGGINGFACE_API_KEY}",
                 request = HuggingFaceRequest(inputs = inputText)
             )
 

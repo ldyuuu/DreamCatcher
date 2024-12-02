@@ -48,5 +48,14 @@ fun MainMenu(navController: NavHostController) {
         ) {
             Text("Generate Image")
         }
+
+        Button(
+            onClick = { navController.navigate("prompt_enrich_test") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+        ) {
+            Text("Enrich Prompt")
+        }
     }
 }
