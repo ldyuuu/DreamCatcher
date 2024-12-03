@@ -3,6 +3,8 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
 @Entity(
     tableName = "dreams",
@@ -19,7 +21,7 @@ data class Dream(
     val userId: Int,
     val title: String?,
     val content: String,
-    val mood: Int,
+    val mood: String,
     val createdAt: Long = System.currentTimeMillis(),
     val aiImageURL: String?
 )

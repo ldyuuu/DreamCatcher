@@ -1,5 +1,6 @@
 package com.example.dreamcatcher.screens
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -7,10 +8,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -34,15 +37,28 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import coil.compose.rememberAsyncImagePainter
+import com.example.dreamcatcher.Dream
+import com.example.dreamcatcher.DreamDao
 import com.example.dreamcatcher.tools.ImageGeneration
 import com.example.dreamcatcher.tools.MicRecord
 import com.example.dreamcatcher.R
+import com.example.dreamcatcher.network.HuggingFaceResponse
+import com.example.dreamcatcher.tools.MoodDisplay
+import com.example.dreamcatcher.tools.fetchEmotion
+import com.example.dreamcatcher.tools.moodIcons
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.launch
 
 
-open class TodayViewModel : ViewModel() {
+open class TodayViewModel(private val dreamDao: DreamDao) : ViewModel() {
     val spokenTextState = mutableStateOf("Press the microphone to speak")
     val isRecordingState = mutableStateOf(false)
+    val topMoods = mutableStateOf(emptyList<Pair<String, Int>>())
+    val isMoodDisplayed = mutableStateOf(false)
 
     fun updateSpokenText(newText: String) {
         spokenTextState.value = newText
@@ -51,13 +67,56 @@ open class TodayViewModel : ViewModel() {
     fun setRecordingState(isRecording: Boolean) {
         isRecordingState.value = isRecording
     }
+
+    fun saveDream(userId: Int, aiImageURL: String, onComplete: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val content = spokenTextState.value
+            val userExists = dreamDao.getUserById(userId) != null
+            if (!userExists) {
+                Log.e("TodayViewModel", "User $userId not found")
+                onComplete(false)
+                return@launch
+            }
+
+            fetchEmotion(content) { emotion ->
+                val primaryMood = emotion.maxByOrNull { it.score }?.label ?: "Neutral"
+                val calculatedTopMoods = emotion.sortedByDescending { it.score }
+                    .take(4)
+                    .map { it.label to (it.score * 100).toInt() }
+
+                topMoods.value = calculatedTopMoods
+                isMoodDisplayed.value = true
+
+                val newDream = Dream(
+                    userId = userId,
+                    title = "Generated Dream",
+                    content = content,
+                    mood = primaryMood,
+                    aiImageURL = aiImageURL
+                )
+
+                viewModelScope.launch {
+                    try {
+                        dreamDao.insertDream(newDream)
+                        onComplete(true)
+                    } catch (e: Exception) {
+                        Log.e("TodayViewModel", "Error saving dream: ${e.message}")
+                        onComplete(false)
+                    }
+                }
+            }
+        }
+    }
 }
+
 
 
 @Composable
 fun TodayScreen(todayViewModel: TodayViewModel) {
     val spokenTextState = todayViewModel.spokenTextState
     val isRecordingState = todayViewModel.isRecordingState
+    val topMoods = todayViewModel.topMoods
+    val isMoodDisplayed = todayViewModel.isMoodDisplayed
     val generatedImageUrl = remember { mutableStateOf<String?>(null) }
     val isEditingState = remember { mutableStateOf(false) }
     val isGeneratingImage = remember { mutableStateOf(false) }
@@ -89,40 +148,49 @@ fun TodayScreen(todayViewModel: TodayViewModel) {
                         .clip(RoundedCornerShape(8.dp)),
                     contentScale = ContentScale.Crop
                 )
-            } ?: Text(
-                "Press Accept to generate a dream image",
-            )
+            } ?: Text("Press Accept to generate a dream image")
         }
 
-        // Middle Section with Icons
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                iconRes = icons[0].second,
-                description = "Paint",
-                label = "Paint",
-                onClick = { isGeneratingImage.value = true },
-                enabled = spokenTextState.value.isNotEmpty() && spokenTextState.value != "Press the microphone to speak"
-            )
-            IconButton(
-                iconRes = icons[1].second,
-                description = "Accept",
-                label = "Accept",
-                onClick = { /* Perform Accept action */ }
-            )
-            IconButton(
-                iconRes = icons[3].second,
-                description = "Edit",
-                label = "Edit",
-                onClick = { isEditingState.value = true }
-            )
+        // Middle Section
+        if (isMoodDisplayed.value) {
+            MoodDisplay(moods = topMoods.value)
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    iconRes = icons[0].second,
+                    description = "Paint",
+                    label = "Paint",
+                    onClick = { isGeneratingImage.value = true },
+                    enabled = spokenTextState.value.isNotEmpty() && spokenTextState.value != "Press the microphone to speak"
+                )
+                IconButton(
+                    iconRes = icons[1].second,
+                    description = "Accept",
+                    label = "Accept",
+                    onClick = {
+                        todayViewModel.saveDream(
+                            userId = 1,
+                            aiImageURL = generatedImageUrl.value ?: "",
+                            onComplete = { success ->
+                                if (!success) Log.e("TodayScreen", "Error saving dream")
+                            }
+                        )
+                    }
+                )
+                IconButton(
+                    iconRes = icons[3].second,
+                    description = "Edit",
+                    label = "Edit",
+                    onClick = { isEditingState.value = true }
+                )
+            }
         }
-
 
         // Bottom Section
         Box(
@@ -160,6 +228,7 @@ fun TodayScreen(todayViewModel: TodayViewModel) {
         }
     }
 }
+
 
 
 @Composable
@@ -233,3 +302,45 @@ fun EditDialog(
         }
     )
 }
+
+@Composable
+fun MoodDisplay(moods: List<Pair<String, Int>>) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        moods.forEach { (mood, percentage) ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    painter = painterResource(id = moodIcons[mood] ?: R.drawable.neutral),
+                    contentDescription = mood,
+                    modifier = Modifier.size(32.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("$mood: $percentage%", style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+    }
+}
+
+
+
+class TodayViewModelFactory(private val dreamDao: DreamDao) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(TodayViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return TodayViewModel(dreamDao) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
+
+
