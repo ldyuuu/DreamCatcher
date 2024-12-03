@@ -25,7 +25,7 @@ interface DreamDao {
 
     @Query("""
     SELECT * FROM dreams 
-    WHERE userId = :userId AND DATE(createdAt / 1000, 'unixepoch') = :date
+    WHERE userId = :userId AND DATE(createdAt / 1000, 'unixepoch','localtime') = :date
     ORDER BY createdAt DESC
 """)
     fun getDreamsByUserAndDate(userId: Int, date: String): LiveData<List<Dream>>
