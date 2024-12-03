@@ -31,12 +31,14 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.dreamcatcher.screens.CalendarScreen
 import com.example.dreamcatcher.screens.HomeScreen
 import com.example.dreamcatcher.screens.NewsScreen
 import com.example.dreamcatcher.screens.SettingScreen
 import com.example.dreamcatcher.screens.TodayScreen
+import com.example.dreamcatcher.screens.TodayViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,11 +54,10 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainApp() {
     val navController = rememberNavController()
-    val currentBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = currentBackStackEntry?.destination?.route
+    val todayViewModel: TodayViewModel = viewModel()
 
     Scaffold(
-        topBar = { TopBar(currentRoute = currentRoute) },
+        topBar = { TopBar(currentRoute = navController.currentBackStackEntry?.destination?.route) },
         bottomBar = { BottomNavigationBar(navController = navController) }
     ) { innerPadding ->
         NavHost(
@@ -65,7 +66,7 @@ fun MainApp() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("home") { HomeScreen() }
-            composable("today") { TodayScreen() }
+            composable("today") { TodayScreen(todayViewModel = todayViewModel) }
             composable("calendar") { CalendarScreen() }
             composable("news") { NewsScreen() }
             composable("settings") { SettingScreen() }
@@ -76,10 +77,23 @@ fun MainApp() {
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
+    val fakeViewModel = object : TodayViewModel() {
+        init {
+            spokenTextState.value = "Mocked user input for preview"
+        }
+    }
+
     DreamcatcherTheme {
-        TodayScreen()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(android.graphics.Color.parseColor("#ffeeaa"))) // Use custom color
+        ) {
+            TodayScreen(todayViewModel = fakeViewModel)
+        }
     }
 }
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -164,37 +178,6 @@ fun BottomNavigationBar(
 
             )
         }
-    }
-}
-
-
-
-@Composable
-fun NavigationHost(navController: NavHostController, modifier: Modifier) {
-    NavHost(
-        navController = navController,
-        startDestination = "home",
-        modifier = modifier
-    ) {
-        composable("home") { HomeScreen() }
-        composable("today") { TodayScreen() }
-        composable("calendar") { CalendarScreen() }
-        composable("news") { NewsScreen() }
-        composable("settings") { SettingScreen() }
-    }
-}
-
-
-
-@Composable
-fun CenteredText(text: String) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = text, style = MaterialTheme.typography.bodyLarge)
     }
 }
 

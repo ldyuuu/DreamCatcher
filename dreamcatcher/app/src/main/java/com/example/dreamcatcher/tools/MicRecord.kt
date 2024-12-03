@@ -1,4 +1,4 @@
-package com.example.dreamcatcher
+package com.example.dreamcatcher.tools
 
 import android.Manifest
 import android.util.Log
@@ -25,7 +25,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.navigation.NavHostController
+import com.example.dreamcatcher.BuildConfig
+import com.example.dreamcatcher.R
 
 import com.example.dreamcatcher.network.HuggingFaceRequest
 import com.example.dreamcatcher.network.HuggingFaceResponse
