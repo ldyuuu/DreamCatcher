@@ -24,6 +24,13 @@ interface DreamDao {
     suspend fun getDreamsByDate(date: String): List<Dream>
 
     @Query("""
+    SELECT * FROM dreams 
+    WHERE userId = :userId AND DATE(createdAt / 1000, 'unixepoch') = :date
+    ORDER BY createdAt DESC
+""")
+    fun getDreamsByUserAndDate(userId: Int, date: String): LiveData<List<Dream>>
+
+    @Query("""
         SELECT * FROM dreams 
         WHERE DATE(createdAt / 1000, 'unixepoch') BETWEEN :startDate AND :endDate
     """)

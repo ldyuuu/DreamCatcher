@@ -38,6 +38,7 @@ fun DatabaseTest(navController: NavController, viewModel: MainViewModel) {
     val allUsers by viewModel.allUsers.observeAsState(emptyList())
     val userName = remember { mutableStateOf("") }
     val userEmail = remember { mutableStateOf("") }
+    val allDreams by viewModel.allDreams.observeAsState(emptyList())
 
     Column(
         modifier = Modifier
@@ -116,8 +117,40 @@ fun DatabaseTest(navController: NavController, viewModel: MainViewModel) {
                 }
             }
         }
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Display dreams
+        Text(
+            text = "Dreams",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+
+        LazyColumn {
+            items(allDreams) { dream ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+
+                        Column(modifier = Modifier.fillMaxWidth(0.8f)) {
+                            Text(text = "Content: ${dream.content.take(50)}...") // Shorten content
+                            Text(text = "Mood: ${dream.mood}")
+                            Text(text = "URL: ${dream.aiImageURL}")
+                        }
+
+
+                    Button(onClick = { viewModel.removeDream(dream) }) {
+                        Text("Delete")
+                    }
+                }
+            }
+        }
     }
 }
+
 
 
 

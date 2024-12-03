@@ -51,6 +51,10 @@ class Repository(private val userDao: UserDao, private val dreamDao: DreamDao) {
         }
     }
 
+    fun getDreamsByUserAndDate(userId: Int, date: String): LiveData<List<Dream>> {
+        return dreamDao.getDreamsByUserAndDate(userId, date)
+    }
+
     fun findDreamsByDate(date: String) {
         coroutineScope.launch(Dispatchers.Main) {
             searchDreamResults.value = asyncFindDreamsByDate(date).await() ?: emptyList()

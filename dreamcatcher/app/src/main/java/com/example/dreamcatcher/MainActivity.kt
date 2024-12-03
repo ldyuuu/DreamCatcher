@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.dreamcatcher.screens.CalendarScreen
+import com.example.dreamcatcher.screens.DreamDetailScreen
 import com.example.dreamcatcher.screens.HomeScreen
 import com.example.dreamcatcher.screens.NewsScreen
 import com.example.dreamcatcher.screens.SettingScreen
@@ -49,22 +50,25 @@ class MainActivity : ComponentActivity() {
 
         val database = DreamcatcherRoomDatabase.getInstance(applicationContext)
         val dreamDao = database.dreamDao()
-
+        val viewModel: MainViewModel
         val todayViewModel: TodayViewModel = ViewModelProvider(
             this,
             TodayViewModelFactory(dreamDao)
         )[TodayViewModel::class.java]
+        val factory = MainViewModelFactory(application)
+        viewModel = ViewModelProvider(this, factory)[MainViewModel::class.java]
+
 
         setContent {
             DreamcatcherTheme {
-                MainApp()
+                MainApp(viewModel = viewModel, userId = 1)//user Id comes from other page
             }
         }
     }
 }
 
 @Composable
-fun MainApp() {
+fun MainApp(viewModel: MainViewModel, userId: Int) {
     val navController = rememberNavController()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val todayViewModel: TodayViewModel = viewModel()
@@ -81,7 +85,26 @@ fun MainApp() {
         ) {
             composable("home") { HomeScreen() }
             composable("today") { TodayScreen(todayViewModel = todayViewModel) }
-            composable("calendar") { CalendarScreen() }
+            composable("calendar") {
+                CalendarScreen(
+                    viewModel = viewModel,
+                    userId = userId,
+                    onDateSelected = { selectedDate ->
+                        // 跳转到梦境详情页面，传递选中的日期
+                        navController.navigate("dreamDetail/$selectedDate")
+                    }
+                )
+            }
+            composable("dreamDetail/{selectedDate}") { backStackEntry ->
+                // 获取传递的日期参数
+                val selectedDate = backStackEntry.arguments?.getString("selectedDate") ?: ""
+                DreamDetailScreen(
+                    viewModel = viewModel,
+                    userId = userId,
+                    date = selectedDate,
+                    onBack = { navController.popBackStack() }
+                )
+            }
             composable("news") { NewsScreen() }
             composable("settings") { SettingScreen(navController = navController) }
             composable("database_testing") {
@@ -112,6 +135,7 @@ fun TopBar(currentRoute: String?) {
         "calendar" to "Calendar",
         "news" to "News Feed",
         "settings" to "Settings",
+        "dreamDetail/{selectedDate}" to "Dream Detail",
         "database_testing" to "Database Testing"
     )
     val screenTitle = screenTitles[currentRoute] ?: "Home"
@@ -189,10 +213,16 @@ fun BottomNavigationBar(
 }
 
 
+class MainViewModelFactory(private val application: Application) : ViewModelProvider.Factory {
 
-class MainViewModelFactory(val application: Application) :
-    ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return MainViewModel(application) as T
+        // 验证 ViewModel 类型
+        if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
+            return MainViewModel(application) as T
+        }
+        // 抛出异常以防止错误类型
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
 }
+

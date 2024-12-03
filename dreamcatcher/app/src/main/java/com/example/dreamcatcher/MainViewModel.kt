@@ -34,6 +34,10 @@ open class MainViewModel(application: Application) : ViewModel() {
         repository.deleteUser(user)
     }
 
+    fun getDreamsByUserAndDate(userId: Int, date: String): LiveData<List<Dream>> {
+        return repository.getDreamsByUserAndDate(userId, date)
+    }
+
     fun findUser(email: String) {
         repository.findUserByEmail(email)
     }
