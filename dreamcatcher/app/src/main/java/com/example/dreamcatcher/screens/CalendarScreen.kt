@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Button
 import java.util.Calendar
 import androidx.compose.material3.Text
 
@@ -59,7 +60,7 @@ fun CalendarScreen(
                 .padding(8.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").forEach { day ->
+            listOf("Sun","Mon", "Tue", "Wed", "Thu", "Fri", "Sat").forEach { day ->
                 Text(
                     text = day,
                     style = MaterialTheme.typography.bodyMedium,
@@ -92,6 +93,7 @@ fun CalendarScreen(
                 )
             }
         }
+
     }
 
     // 显示当前月份在页面底部

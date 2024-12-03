@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButtonDefaults.Icon
@@ -69,6 +70,23 @@ fun DreamDetailScreen(
                 onClick = onBack
             )
         }
+//        Button(onClick = {
+//            val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+//            val date = formatter.parse("2024-12-1") //
+//            val timestamp = date?.time ?: System.currentTimeMillis()
+//            val dream = Dream(
+//                userId = 1,
+//                content = "A dream about flying in the sky.",
+//                aiImageURL = "https://example.com/image.jpg",
+//                createdAt = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+//                    .parse("2024-12-01")?.time ?: System.currentTimeMillis(),
+//                mood = "Excited",
+//                title="nothing"
+//            )
+//            viewModel.addDream(dream)
+//        }) {
+//            Text("Insert Dream")
+//        }
     }
 }
 

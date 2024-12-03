@@ -31,7 +31,9 @@ import androidx.navigation.NavController
 import com.example.dreamcatcher.MainViewModel
 import com.example.dreamcatcher.R
 import com.example.dreamcatcher.User
-
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DatabaseTest(navController: NavController, viewModel: MainViewModel) {
@@ -139,6 +141,8 @@ fun DatabaseTest(navController: NavController, viewModel: MainViewModel) {
                             Text(text = "Content: ${dream.content.take(50)}...") // Shorten content
                             Text(text = "Mood: ${dream.mood}")
                             Text(text = "URL: ${dream.aiImageURL}")
+                            val formattedDate = formatTimestamp(dream.createdAt)
+                            Text(text = "Created At: $formattedDate")
                         }
 
 
@@ -150,7 +154,11 @@ fun DatabaseTest(navController: NavController, viewModel: MainViewModel) {
         }
     }
 }
-
+fun formatTimestamp(timestamp: Long): String {
+    val date = Date(timestamp)
+    val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()) // 格式化为日期时间
+    return format.format(date)
+}
 
 
 
