@@ -26,6 +26,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.dreamcatcher.ui.theme.DreamcatcherTheme
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -40,6 +41,7 @@ import com.example.dreamcatcher.screens.SettingScreen
 import com.example.dreamcatcher.screens.TodayScreen
 import com.example.dreamcatcher.screens.TodayViewModel
 import com.example.dreamcatcher.screens.TodayViewModelFactory
+import com.example.dreamcatcher.tools.DatabaseTest
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,10 +66,12 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainApp() {
     val navController = rememberNavController()
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val todayViewModel: TodayViewModel = viewModel()
+    val currentRoute = currentBackStackEntry?.destination?.route
 
     Scaffold(
-        topBar = { TopBar(currentRoute = navController.currentBackStackEntry?.destination?.route) },
+        topBar = { TopBar(currentRoute = currentRoute) },
         bottomBar = { BottomNavigationBar(navController = navController) }
     ) { innerPadding ->
         NavHost(
@@ -79,7 +83,11 @@ fun MainApp() {
             composable("today") { TodayScreen(todayViewModel = todayViewModel) }
             composable("calendar") { CalendarScreen() }
             composable("news") { NewsScreen() }
-            composable("settings") { SettingScreen() }
+            composable("settings") { SettingScreen(navController = navController) }
+            composable("database_testing") {
+                val mainViewModel: MainViewModel = viewModel(factory = MainViewModelFactory(LocalContext.current.applicationContext as Application))
+                DatabaseTest(navController = navController,viewModel = mainViewModel)
+            }
         }
     }
 }
@@ -87,7 +95,9 @@ fun MainApp() {
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
+    DreamcatcherTheme {
 
+    }
 }
 
 
@@ -101,7 +111,8 @@ fun TopBar(currentRoute: String?) {
         "today" to "Today",
         "calendar" to "Calendar",
         "news" to "News Feed",
-        "settings" to "Settings"
+        "settings" to "Settings",
+        "database_testing" to "Database Testing"
     )
     val screenTitle = screenTitles[currentRoute] ?: "Home"
 
