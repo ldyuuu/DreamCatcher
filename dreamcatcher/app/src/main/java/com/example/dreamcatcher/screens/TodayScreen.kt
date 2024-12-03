@@ -21,7 +21,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,8 +35,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import coil.compose.rememberAsyncImagePainter
-import com.example.dreamcatcher.ImageGeneration
-import com.example.dreamcatcher.MicRecord
+import com.example.dreamcatcher.tools.ImageGeneration
+import com.example.dreamcatcher.tools.MicRecord
 import com.example.dreamcatcher.R
 
 

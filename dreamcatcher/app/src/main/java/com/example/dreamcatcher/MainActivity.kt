@@ -183,20 +183,6 @@ fun BottomNavigationBar(
 
 
 
-@Composable
-fun CenteredText(text: String) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = text, style = MaterialTheme.typography.bodyLarge)
-    }
-}
-
-
-
 class MainViewModelFactory(val application: Application) :
     ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
