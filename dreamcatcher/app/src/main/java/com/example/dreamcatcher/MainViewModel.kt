@@ -4,9 +4,9 @@ import android.app.Application
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 
-class MainViewModel(application: Application) : ViewModel() {
+open class MainViewModel(application: Application) : ViewModel() {
     private val repository: Repository
-    val allUsers: LiveData<List<User>>
+    open val allUsers: LiveData<List<User>>
     val allDreams: LiveData<List<Dream>>
     val searchUserResults: LiveData<User?>
     val searchDreamResults: LiveData<List<Dream>>
@@ -26,11 +26,11 @@ class MainViewModel(application: Application) : ViewModel() {
     }
 
     // 用户操作方法
-    fun addUser(user: User) {
+    open fun addUser(user: User) {
         repository.insertUser(user)
     }
 
-    fun removeUser(user: User) {
+    open fun removeUser(user: User) {
         repository.deleteUser(user)
     }
 
