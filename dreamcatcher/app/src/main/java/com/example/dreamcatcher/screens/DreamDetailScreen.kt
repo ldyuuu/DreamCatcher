@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -39,12 +40,27 @@ fun DreamDetailScreen(
 ) {
     val dreams by viewModel.getDreamsByUserAndDate(userId, date).observeAsState(emptyList())
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // 返回按钮
+
+
+        // 显示梦境信息
+        if (dreams.isNotEmpty()) {
+            LazyDreamInfoView(dreams = dreams)
+        } else {
+            Text(
+                text = "No dreams for $date",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.align(Alignment.Center)
+            )
+        }
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            contentAlignment = Alignment.CenterStart
+                .padding(16.dp)
+                .absoluteOffset(x = 16.dp, y = 16.dp)
+
+            //contentAlignment = Alignment.CenterStart
         ) {
             IconButton(
                 iconRes = R.drawable.back,
@@ -53,64 +69,46 @@ fun DreamDetailScreen(
                 onClick = onBack
             )
         }
-
-        // 显示梦境信息
-        if (dreams.isNotEmpty()) {
-            DreamInfoView(dreams = dreams)
-        } else {
-            Text(
-                text = "No dreams for $date",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(16.dp)
-            )
-        }
-
-
     }
 }
 
-
-
 @Composable
-fun DreamInfoView(dreams: List<Dream>) {
-    if (dreams.isNotEmpty()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            dreams.forEach { dream ->
-                Column(
+fun LazyDreamInfoView(dreams: List<Dream>) {
+    androidx.compose.foundation.lazy.LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        items(dreams.size) { index ->
+            val dream = dreams[index]
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            ) {
+                // 显示图片
+                AsyncImage(
+                    model = dream.aiImageURL,
+                    contentDescription = "Dream Image",
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 16.dp)
-                ) {
-                    // 显示图片
-                    AsyncImage(
-                        model = dream.aiImageURL,
-                        contentDescription = "Dream Image",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(16 / 9f)
+                        .aspectRatio(16 / 9f)
+                )
 
-                    )
+                val formattedDate = formatTimestamp(dream.createdAt)
 
-                    val formattedDate = formatTimestamp(dream.createdAt)
-                    Spacer(modifier = Modifier.height(16.dp)) //
-                    // 显示梦境信息
-                    Text(text = "Date: $formattedDate", style = MaterialTheme.typography.titleMedium)
-                    Text(text = "Content: ${dream.content}", style = MaterialTheme.typography.bodyMedium)
-                    Text(text = "mood: ${dream.mood}", style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.height(16.dp))
 
-                }
+                // 显示梦境信息
+                Text(text = "Date: $formattedDate", style = MaterialTheme.typography.titleMedium)
+                Text(text = "Content: ${dream.content}", style = MaterialTheme.typography.bodyMedium)
+                Text(text = "Mood: ${dream.mood}", style = MaterialTheme.typography.bodyMedium)
+
+                Spacer(modifier = Modifier.height(30.dp))
             }
         }
-    } else {
-        Text(
-            text = "No dreams available",
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(16.dp)
-        )
+
     }
 }
 
