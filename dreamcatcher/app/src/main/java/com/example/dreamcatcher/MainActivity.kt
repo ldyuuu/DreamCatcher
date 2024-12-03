@@ -39,10 +39,20 @@ import com.example.dreamcatcher.screens.NewsScreen
 import com.example.dreamcatcher.screens.SettingScreen
 import com.example.dreamcatcher.screens.TodayScreen
 import com.example.dreamcatcher.screens.TodayViewModel
+import com.example.dreamcatcher.screens.TodayViewModelFactory
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val database = DreamcatcherRoomDatabase.getInstance(applicationContext)
+        val dreamDao = database.dreamDao()
+
+        val todayViewModel: TodayViewModel = ViewModelProvider(
+            this,
+            TodayViewModelFactory(dreamDao)
+        )[TodayViewModel::class.java]
+
         setContent {
             DreamcatcherTheme {
                 MainApp()
@@ -77,21 +87,7 @@ fun MainApp() {
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-    val fakeViewModel = object : TodayViewModel() {
-        init {
-            spokenTextState.value = "Mocked user input for preview"
-        }
-    }
 
-    DreamcatcherTheme {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(android.graphics.Color.parseColor("#ffeeaa"))) // Use custom color
-        ) {
-            TodayScreen(todayViewModel = fakeViewModel)
-        }
-    }
 }
 
 

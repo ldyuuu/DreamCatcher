@@ -31,6 +31,7 @@ import com.example.dreamcatcher.R
 import com.example.dreamcatcher.network.HuggingFaceRequest
 import com.example.dreamcatcher.network.HuggingFaceResponse
 import com.example.dreamcatcher.network.RetrofitInstance
+import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -128,7 +129,6 @@ fun fetchEmotion(inputText: String, onResult: (List<HuggingFaceResponse>) -> Uni
         try {
             Log.d("HuggingFace", "Sending text to Hugging Face API: $inputText")
             Log.d("HuggingFace", "API Key: ${BuildConfig.HUGGINGFACE_API_KEY}")
-
 
             val response = RetrofitInstance.huggingFaceAPI.analyzeEmotion(
                 request = HuggingFaceRequest(inputs = inputText)

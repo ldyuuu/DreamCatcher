@@ -5,7 +5,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 
-@Database(entities = [User::class, Dream::class], version = 1)
+@Database(entities = [User::class, Dream::class], version = 2)
 abstract class DreamcatcherRoomDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun dreamDao(): DreamDao
