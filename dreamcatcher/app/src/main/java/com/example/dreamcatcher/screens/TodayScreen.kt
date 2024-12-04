@@ -84,6 +84,7 @@ open class TodayViewModel(private val dreamDao: DreamDao) : ViewModel() {
 
             fetchEmotion(content) { emotion ->
                 val primaryMood = emotion.maxByOrNull { it.score }?.label ?: "Neutral"
+                val allMoodJsons = Gson().toJson(emotion)
                 val calculatedTopMoods = emotion.sortedByDescending { it.score }
                     .take(4)
                     .map { it.label to (it.score * 100).toInt() }
@@ -95,7 +96,7 @@ open class TodayViewModel(private val dreamDao: DreamDao) : ViewModel() {
                     userId = userId,
                     title = "Generated Dream",
                     content = content,
-                    mood = primaryMood,
+                    mood = allMoodJsons,
                     aiImageURL = aiImageURL
                 )
 

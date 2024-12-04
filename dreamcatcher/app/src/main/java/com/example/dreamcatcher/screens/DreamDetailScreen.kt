@@ -76,11 +76,11 @@ fun DreamDetailScreen(
 //            val timestamp = date?.time ?: System.currentTimeMillis()
 //            val dream = Dream(
 //                userId = 1,
-//                content = "A dream about flying in the sky.",
+//                content = "A dream about big carrot.",
 //                aiImageURL = "https://example.com/image.jpg",
 //                createdAt = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 //                    .parse("2024-12-01")?.time ?: System.currentTimeMillis(),
-//                mood = "Excited",
+//                mood = "Anger",
 //                title="nothing"
 //            )
 //            viewModel.addDream(dream)
