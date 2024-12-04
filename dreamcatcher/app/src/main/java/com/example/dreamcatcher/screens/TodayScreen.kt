@@ -24,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +35,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -59,6 +62,7 @@ open class TodayViewModel(private val dreamDao: DreamDao) : ViewModel() {
     val isRecordingState = mutableStateOf(false)
     val topMoods = mutableStateOf(emptyList<Pair<String, Int>>())
     val isMoodDisplayed = mutableStateOf(false)
+    val dailyImages = mutableStateOf<List<String>>(emptyList())
 
     fun updateSpokenText(newText: String) {
         spokenTextState.value = newText
@@ -80,6 +84,7 @@ open class TodayViewModel(private val dreamDao: DreamDao) : ViewModel() {
 
             fetchEmotion(content) { emotion ->
                 val primaryMood = emotion.maxByOrNull { it.score }?.label ?: "Neutral"
+                val allMoodJsons = Gson().toJson(emotion)
                 val calculatedTopMoods = emotion.sortedByDescending { it.score }
                     .take(4)
                     .map { it.label to (it.score * 100).toInt() }
@@ -91,13 +96,14 @@ open class TodayViewModel(private val dreamDao: DreamDao) : ViewModel() {
                     userId = userId,
                     title = "Generated Dream",
                     content = content,
-                    mood = primaryMood,
+                    mood = allMoodJsons,
                     aiImageURL = aiImageURL
                 )
 
                 viewModelScope.launch {
                     try {
                         dreamDao.insertDream(newDream)
+                        dailyImages.value = dailyImages.value + aiImageURL
                         onComplete(true)
                     } catch (e: Exception) {
                         Log.e("TodayViewModel", "Error saving dream: ${e.message}")
@@ -107,8 +113,17 @@ open class TodayViewModel(private val dreamDao: DreamDao) : ViewModel() {
             }
         }
     }
-}
 
+    fun resetState() {
+        spokenTextState.value = "Press the microphone to speak"
+        isRecordingState.value = false
+        topMoods.value = emptyList()
+        isMoodDisplayed.value = false
+        dailyImages.value = emptyList()
+    }
+
+
+}
 
 
 @Composable
@@ -120,6 +135,11 @@ fun TodayScreen(todayViewModel: TodayViewModel) {
     val generatedImageUrl = remember { mutableStateOf<String?>(null) }
     val isEditingState = remember { mutableStateOf(false) }
     val isGeneratingImage = remember { mutableStateOf(false) }
+    val dailyImages = todayViewModel.dailyImages
+
+    LaunchedEffect(Unit) {
+        todayViewModel.resetState()
+    }
 
     val icons = listOf(
         "Paint" to R.drawable.paint,
@@ -139,16 +159,18 @@ fun TodayScreen(todayViewModel: TodayViewModel) {
                 .background(MaterialTheme.colorScheme.background),
             contentAlignment = Alignment.Center
         ) {
-            generatedImageUrl.value?.let { imageUrl ->
+            if (dailyImages.value.isNotEmpty()) {
                 Image(
-                    painter = rememberAsyncImagePainter(model = imageUrl),
+                    painter = rememberAsyncImagePainter(model = dailyImages.value.last()),
                     contentDescription = "Dream Image",
                     modifier = Modifier
                         .size(360.dp)
                         .clip(RoundedCornerShape(8.dp)),
                     contentScale = ContentScale.Crop
                 )
-            } ?: Text("Press Accept to generate a dream image")
+            } else {
+                Text("Press Paint to generate a dream image")
+            }
         }
 
         // Middle Section
@@ -222,13 +244,13 @@ fun TodayScreen(todayViewModel: TodayViewModel) {
                 prompt = spokenTextState.value,
                 onImageGenerated = { imageUrl ->
                     generatedImageUrl.value = imageUrl
+                    todayViewModel.dailyImages.value = todayViewModel.dailyImages.value + imageUrl
                     isGeneratingImage.value = false
                 }
             )
         }
     }
 }
-
 
 
 @Composable
@@ -330,7 +352,6 @@ fun MoodDisplay(moods: List<Pair<String, Int>>) {
         }
     }
 }
-
 
 
 class TodayViewModelFactory(private val dreamDao: DreamDao) : ViewModelProvider.Factory {
