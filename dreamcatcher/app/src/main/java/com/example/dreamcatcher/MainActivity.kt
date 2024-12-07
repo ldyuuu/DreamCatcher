@@ -37,7 +37,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.dreamcatcher.screens.CalendarScreen
 import com.example.dreamcatcher.screens.DreamDetailScreen
 import com.example.dreamcatcher.screens.HomeScreen
-import com.example.dreamcatcher.screens.NewsScreen
+import com.example.dreamcatcher.screens.MapScreen
 import com.example.dreamcatcher.screens.SettingScreen
 import com.example.dreamcatcher.screens.TodayScreen
 import com.example.dreamcatcher.screens.TodayViewModel
@@ -59,16 +59,19 @@ class MainActivity : ComponentActivity() {
         viewModel = ViewModelProvider(this, factory)[MainViewModel::class.java]
 
 
+        val email = "test@gmail.com"
+        val apiKey = BuildConfig.GOOGLE_MAP_API_KEY
+
         setContent {
             DreamcatcherTheme {
-                MainApp(viewModel = viewModel, userId = 1)//user Id comes from other page
+                MainApp(viewModel = viewModel, userId = 1,apiKey = apiKey,email = email)//user Id comes from other page
             }
         }
     }
 }
 
 @Composable
-fun MainApp(viewModel: MainViewModel, userId: Int) {
+fun MainApp(viewModel: MainViewModel, userId: Int, apiKey:String, email:String) {
     val navController = rememberNavController()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val todayViewModel: TodayViewModel = viewModel()
@@ -105,7 +108,7 @@ fun MainApp(viewModel: MainViewModel, userId: Int) {
                     onBack = { navController.popBackStack() }
                 )
             }
-            composable("news") { NewsScreen() }
+            composable("map") { MapScreen(email = email, apiKey = apiKey, viewModel = viewModel) }
             composable("settings") { SettingScreen(navController = navController) }
             composable("database_testing") {
                 val mainViewModel: MainViewModel = viewModel(factory = MainViewModelFactory(LocalContext.current.applicationContext as Application))
@@ -133,7 +136,7 @@ fun TopBar(currentRoute: String?) {
         "home" to "Home",
         "today" to "Today",
         "calendar" to "Calendar",
-        "news" to "News Feed",
+        "map" to "Map",
         "settings" to "Settings",
         "dreamDetail/{selectedDate}" to "Dream Detail",
         "database_testing" to "Database Testing"
@@ -175,7 +178,7 @@ fun BottomNavigationBar(
             "home" to R.drawable.home,
             "today" to R.drawable.today,
             "calendar" to R.drawable.calendar,
-            "news" to R.drawable.news,
+            "map" to R.drawable.map,
             "settings" to R.drawable.setting
         )
         screens.forEach { (route, iconRes) ->

@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class Repository(private val userDao: UserDao, private val dreamDao: DreamDao) {
 
@@ -63,6 +64,16 @@ class Repository(private val userDao: UserDao, private val dreamDao: DreamDao) {
 
     private fun asyncFindDreamsByDate(date: String) = coroutineScope.async(Dispatchers.IO) {
         dreamDao.getDreamsByDate(date)
+    }
+
+    suspend fun getUserByEmailSync(email: String): User? {
+        return userDao.getUserByEmail(email)
+    }
+
+    fun getUserByEmail(email: String): User? {
+        return runBlocking {
+            userDao.getUserByEmail(email)
+        }
     }
 
 }

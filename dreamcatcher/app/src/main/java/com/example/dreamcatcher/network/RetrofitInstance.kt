@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit
 object RetrofitInstance {
     private const val BASE_URL_HUGGINGFACE = "https://api-inference.huggingface.co/"
     private const val BASE_URL_OPENAI = "https://api.openai.com/"
+    private const val BASE_URL_GOOGLE_MAPS = "https://maps.googleapis.com/"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
@@ -33,6 +34,26 @@ object RetrofitInstance {
             .writeTimeout(60,TimeUnit.SECONDS)
             .build()
     }
+
+
+    val geocodingAPI: GeocodingAPI by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL_GOOGLE_MAPS)
+            .client(createOkHttpClient(BuildConfig.GOOGLE_MAP_API_KEY))
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(GeocodingAPI::class.java)
+    }
+
+    val placesAPI: PlacesAPI by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL_GOOGLE_MAPS)
+            .client(createOkHttpClient(BuildConfig.GOOGLE_MAP_API_KEY))
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(PlacesAPI::class.java)
+    }
+
 
 
     val huggingFaceAPI: HuggingFaceAPI by lazy {
