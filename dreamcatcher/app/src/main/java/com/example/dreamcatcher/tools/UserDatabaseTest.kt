@@ -1,6 +1,6 @@
 package com.example.dreamcatcher.tools
 
-import androidx.compose.foundation.background
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,6 +40,7 @@ fun DatabaseTest(navController: NavController, viewModel: MainViewModel) {
     val allUsers by viewModel.allUsers.observeAsState(emptyList())
     val userName = remember { mutableStateOf("") }
     val userEmail = remember { mutableStateOf("") }
+    val userAddress = remember { mutableStateOf("") }
     val allDreams by viewModel.allDreams.observeAsState(emptyList())
 
     Column(
@@ -79,6 +80,16 @@ fun DatabaseTest(navController: NavController, viewModel: MainViewModel) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+
+        OutlinedTextField(
+            value = userAddress.value,
+            onValueChange = { userAddress.value = it },
+            label = { Text("User Address") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         Button(
             onClick = {
                 if (userName.value.isNotEmpty() && userEmail.value.isNotEmpty()) {
@@ -86,11 +97,13 @@ fun DatabaseTest(navController: NavController, viewModel: MainViewModel) {
                         email = userEmail.value,
                         displayName = userName.value,
                         passwordHash = "",
-                        preferences = ""
+                        preferences = "",
+                        address = userAddress.value
                     )
                     viewModel.addUser(newUser)
                     userName.value = ""
                     userEmail.value = ""
+                    userAddress.value =""
                 }
             },
             modifier = Modifier.fillMaxWidth()
@@ -111,6 +124,7 @@ fun DatabaseTest(navController: NavController, viewModel: MainViewModel) {
                     Column {
                         Text(text = "Name: ${user.displayName}")
                         Text(text = "Email: ${user.email}")
+                        Text(text = "Address: ${user.address}")
                     }
 
                     Button(onClick = { viewModel.removeUser(user) }) {

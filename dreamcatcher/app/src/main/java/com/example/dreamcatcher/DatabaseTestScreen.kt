@@ -51,6 +51,7 @@ fun DatabaseUserScreen(viewModel: MainViewModel,navController: NavHostController
     val allUsers by viewModel.allUsers.observeAsState(emptyList())
     val userName = remember { mutableStateOf("") }
     val userEmail = remember { mutableStateOf("") }
+    val userAddress = remember { mutableStateOf("")}
 
     Column(
         modifier = Modifier
@@ -75,6 +76,15 @@ fun DatabaseUserScreen(viewModel: MainViewModel,navController: NavHostController
             modifier = Modifier.fillMaxWidth()
         )
 
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = userAddress.value,
+            onValueChange = { userAddress.value = it },
+            label = { Text("User Address") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
         Spacer(modifier = Modifier.height(16.dp))
 
         // Add user button
@@ -85,11 +95,15 @@ fun DatabaseUserScreen(viewModel: MainViewModel,navController: NavHostController
                         email = userEmail.value,
                         displayName = userName.value,
                         passwordHash = "",
-                        preferences = ""
+                        preferences = "",
+                        address = userAddress.value
+
                     )
                     viewModel.addUser(newUser)
                     userName.value = ""
                     userEmail.value = ""
+                    userAddress.value = ""
+
                 }
             },
             modifier = Modifier.fillMaxWidth()
@@ -113,6 +127,7 @@ fun DatabaseUserScreen(viewModel: MainViewModel,navController: NavHostController
                         Column {
                             Text(text = "Name: ${user.displayName}")
                             Text(text = "Email: ${user.email}")
+                            Text(text = "Address: ${user.address ?: "N/A"}")
                         }
 
                         Button(onClick = { viewModel.removeUser(user) }) {

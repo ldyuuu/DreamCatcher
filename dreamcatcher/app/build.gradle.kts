@@ -2,7 +2,7 @@ import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 
 plugins {
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.jetbrainsKotlinAndroid) 
+    alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.devtoolsKsp)
 }
 
@@ -24,9 +24,13 @@ android {
         val localProperties = gradleLocalProperties(rootDir,providers)
         val huggingFaceApiKey = localProperties.getProperty("HUGGINGFACE_API_KEY", "")
         val openAiApiKey = localProperties.getProperty("OPENAI_API_KEY", "")
+        val googleMapApiKey = localProperties.getProperty("GOOGLE_MAP_API_KEY","")
+
+        manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = googleMapApiKey
 
         buildConfigField("String", "HUGGINGFACE_API_KEY", "\"$huggingFaceApiKey\"")
         buildConfigField("String", "OPENAI_API_KEY", "\"$openAiApiKey\"")
+        buildConfigField("String","GOOGLE_MAP_API_KEY","\"$googleMapApiKey\"")
     }
 
     buildTypes {
@@ -74,6 +78,7 @@ dependencies {
     implementation (libs.androidx.runtime.livedata)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.play.services.maps)
     annotationProcessor(libs.androidx.room.room.compiler)
     ksp(libs.androidx.room.room.compiler)
     testImplementation(libs.junit)
@@ -96,5 +101,9 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.5.1")
     implementation("androidx.navigation:navigation-compose:2.7.4")
     implementation("androidx.compose.material3:material3:1.1.1")
+
+    implementation("com.google.android.gms:play-services-maps:18.1.0")
+    implementation("com.google.maps.android:maps-compose:2.15.0")
+
 
 }
