@@ -98,7 +98,7 @@ fun DatabaseUserScreen(viewModel: MainViewModel,navController: NavHostController
                     val newUser = User(
                         email = userEmail.value,
                         displayName = userName.value,
-                        passwordHash = "",
+                        //passwordHash = "",
                         preferences = "",
                         address = userAddress.value
 

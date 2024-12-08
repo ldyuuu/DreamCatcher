@@ -1,6 +1,8 @@
 package com.example.dreamcatcher
 
+import LoginScreen
 import android.app.Application
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -34,129 +36,183 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.dreamcatcher.screens.CalendarScreen
-import com.example.dreamcatcher.screens.DisplaySettingsScreen
 import com.example.dreamcatcher.screens.DreamDetailScreen
 import com.example.dreamcatcher.screens.HomeScreen
 import com.example.dreamcatcher.screens.MapScreen
+
 import com.example.dreamcatcher.screens.SettingScreen
 import com.example.dreamcatcher.screens.TodayScreen
 import com.example.dreamcatcher.screens.TodayViewModel
 import com.example.dreamcatcher.screens.TodayViewModelFactory
 import com.example.dreamcatcher.tools.DatabaseTest
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.common.api.ApiException
 
+import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
+object AuthManager {
+    val isLoggedIn = mutableStateOf(false)
+}
 class MainActivity : ComponentActivity() {
+    private lateinit var auth: FirebaseAuth
+    private lateinit var viewModel: MainViewModel
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        auth = FirebaseAuth.getInstance()
 
-        val dataStoreManager = DataStoreManager(applicationContext)
-        val database = DreamcatcherRoomDatabase.getInstance(applicationContext)
+        FirebaseApp.initializeApp(this)
+
+        val database = DreamcatcherRoomDatabase.getInstance(applicationContext)// 允许清除旧数据
         val dreamDao = database.dreamDao()
-        val viewModel: MainViewModel
+        val factory = MainViewModelFactory(application)
+        viewModel = ViewModelProvider(this, factory)[MainViewModel::class.java]
         val todayViewModel: TodayViewModel = ViewModelProvider(
             this,
             TodayViewModelFactory(dreamDao)
         )[TodayViewModel::class.java]
-        val factory = MainViewModelFactory(application, dataStoreManager)
-        viewModel = ViewModelProvider(this, factory)[MainViewModel::class.java]
-
-
-        val email = "test@gmail.com"
-        val apiKey = BuildConfig.GOOGLE_MAP_API_KEY
 
         setContent {
+            val navController = rememberNavController()
             DreamcatcherTheme {
-                MainApp(viewModel = viewModel, userId = 1, apiKey = apiKey, email = email)
+                MainApp(viewModel = viewModel, todayViewModel = todayViewModel, navController = navController)
             }
         }
     }
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == RC_SIGN_IN) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+            try {
+                val account = task.getResult(ApiException::class.java)!!
+                firebaseAuthWithGoogle(account.idToken!!){
+                    // 登录成功后调用回调
+                    AuthManager.isLoggedIn.value = true
+                }
+
+            } catch (e: ApiException) {
+                // Handle sign-in error
+                Log.w("GoogleSignIn", "Google sign in failed", e)
+            }
+        }
+    }
+
+    private fun firebaseAuthWithGoogle(idToken: String, onSuccess: () -> Unit) {
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        auth.signInWithCredential(credential)
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    Log.w("GoogleSignIn", "signInWithCredential:success", task.exception)
+                    // 登录成功
+                    val currentUser = auth.currentUser
+                    viewModel.updateFirebaseUser(currentUser)
+
+                    currentUser?.let { user ->
+                        viewModel.syncFirebaseUserWithLocalData(user)
+                    }
+                    onSuccess()
+                } else {
+                    // 登录失败
+                    Log.w("GoogleSignIn", "signInWithCredential:failure", task.exception)
+                }
+            }
+    }
+
+
+
+    companion object {
+        const val RC_SIGN_IN = 9001
+    }
+
 }
 
-@Composable
-fun MainApp(viewModel: MainViewModel, userId: Int, apiKey: String, email: String) {
-    val navController = rememberNavController()
-    val currentBackStackEntry by navController.currentBackStackEntryAsState()
-    val todayViewModel: TodayViewModel = viewModel()
-    val currentRoute = currentBackStackEntry?.destination?.route
-    val isDarkModeEnabled by viewModel.isDarkModeEnabled.collectAsState(initial = false)
-    val context = LocalContext.current
-    val dataStoreManager = DataStoreManager(context)
 
-    MaterialTheme(colorScheme = if (isDarkModeEnabled) darkColorScheme() else lightColorScheme()) {
-        Scaffold(
-            topBar = { TopBar(currentRoute = currentRoute) },
-            bottomBar = { BottomNavigationBar(navController = navController) }
-        ) { innerPadding ->
-            NavHost(
-                navController = navController,
-                startDestination = "home",
-                modifier = Modifier.padding(innerPadding)
-            ) {
-                composable("home") { HomeScreen() }
-                composable("today") { TodayScreen(todayViewModel = todayViewModel) }
-                composable("calendar") {
+@Composable
+fun MainApp(viewModel: MainViewModel, todayViewModel: TodayViewModel,navController: NavHostController) {
+
+    val loggedInUser by viewModel.loggedInUser.collectAsState()
+    val isLoggedIn by AuthManager.isLoggedIn
+
+    LaunchedEffect(isLoggedIn) {
+        if (isLoggedIn) {
+            navController.navigate("home") {
+                popUpTo("login") { inclusive = true }
+            }
+        }
+    }
+
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = currentBackStackEntry?.destination?.route
+
+    Scaffold(
+        topBar = {
+            if (currentRoute != "login") {
+                TopBar(currentRoute = currentRoute)
+            }
+        },
+        bottomBar = {
+            if (currentRoute != "login") {
+                BottomNavigationBar(navController = navController)
+            }
+        }
+    ) { innerPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = if (isLoggedIn) "home" else "login",
+            modifier = Modifier.padding(innerPadding)
+        ) {
+            composable("login") {
+                LoginScreen(
+                        onLoginSuccess = {
+                            AuthManager.isLoggedIn.value = true
+                            navController.navigate("home") {
+                                popUpTo("login") { inclusive = true }
+                            }
+                        },viewModel= viewModel)
+            }
+            composable("home") {
+                HomeScreen()
+            }
+            composable("today") {
+                TodayScreen(todayViewModel = todayViewModel)
+            }
+            composable("calendar") {
+                loggedInUser?.let { user ->
                     CalendarScreen(
                         viewModel = viewModel,
-                        userId = userId,
+                        userId = user.userId,
                         onDateSelected = { selectedDate ->
-                            // 跳转到梦境详情页面，传递选中的日期
                             navController.navigate("dreamDetail/$selectedDate")
                         }
                     )
                 }
-                composable("dreamDetail/{selectedDate}") { backStackEntry ->
-                    // 获取传递的日期参数
-                    val selectedDate = backStackEntry.arguments?.getString("selectedDate") ?: ""
-                    DreamDetailScreen(
-                        viewModel = viewModel,
-                        userId = userId,
-                        date = selectedDate,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-                composable("map") {
-                    MapScreen(
-                        email = email,
-                        apiKey = apiKey,
-                        viewModel = viewModel
-                    )
-                }
-                composable("settings") { SettingScreen(navController = navController) }
-                composable("database_testing") {
-                    val context = LocalContext.current
-                    val dataStoreManager = DataStoreManager(context)
-
-                    val mainViewModel: MainViewModel = viewModel(
-                        factory = MainViewModelFactory(
-                            application = context.applicationContext as Application,
-                            dataStoreManager = dataStoreManager
-                        )
-                    )
-                    DatabaseTest(navController = navController, viewModel = mainViewModel)
-                }
-
-
-                composable("display_settings") {
-                    DisplaySettingsScreen(
-                        isDarkModeEnabled = isDarkModeEnabled,
-                        onDarkModeToggle = { isEnabled ->
-                            viewModel.setDarkModeEnabled(isEnabled)
-                        },
-                        onCustomizeHomePage = {
-                            navController.navigate("customize_home_page")
-                        },
-                        onBack = {
-                            navController.popBackStack()
-                        }
-                    )
-                }
-
+            }
+            composable("dreamDetail/{selectedDate}") { backStackEntry ->
+                val selectedDate = backStackEntry.arguments?.getString("selectedDate") ?: ""
+                DreamDetailScreen(
+                    viewModel = viewModel,
+                    userId = 1,
+                    date = selectedDate,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("map") {
+                MapScreen(email = "test@gmail.com", apiKey = BuildConfig.GOOGLE_MAP_API_KEY, viewModel = viewModel)
+            }
+            composable("settings") {
+                SettingScreen(navController = navController)
+            }
+            composable("database_testing") {
+                val mainViewModel: MainViewModel = viewModel(factory = MainViewModelFactory(LocalContext.current.applicationContext as Application))
+                DatabaseTest(navController = navController, viewModel = mainViewModel)
             }
         }
     }
 }
-
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
@@ -164,6 +220,7 @@ fun GreetingPreview() {
 
     }
 }
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -177,8 +234,7 @@ fun TopBar(currentRoute: String?) {
         "map" to "Map",
         "settings" to "Settings",
         "dreamDetail/{selectedDate}" to "Dream Detail",
-        "database_testing" to "Database Testing",
-//        "display_setting" to "Settings"
+        "database_testing" to "Database Testing"
     )
     val screenTitle = screenTitles[currentRoute] ?: "Home"
 
@@ -237,7 +293,7 @@ fun BottomNavigationBar(
                 },
                 icon = {
                     Icon(
-                        painter = painterResource(id = iconRes),
+                        painter = painterResource(id=iconRes),
                         contentDescription = route,
                         modifier = Modifier.size(if (selected) 30.dp else 24.dp),
                         tint = Color.Unspecified
@@ -255,16 +311,13 @@ fun BottomNavigationBar(
 }
 
 
-class MainViewModelFactory(
-    private val application: Application,
-    private val dataStoreManager: DataStoreManager
-) : ViewModelProvider.Factory {
+class MainViewModelFactory(private val application: Application) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         // 验证 ViewModel 类型
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
-            return MainViewModel(application, dataStoreManager) as T
+            return MainViewModel(application) as T
         }
         // 抛出异常以防止错误类型
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")

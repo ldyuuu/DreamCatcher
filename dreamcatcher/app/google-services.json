@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "843358620495",
+    "project_id": "dreamcatcher-82eb0",
+    "storage_bucket": "dreamcatcher-82eb0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:843358620495:android:f337830d2ddecd729cd33a",
+        "android_client_info": {
+          "package_name": "com.example.dreamcatcher"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "843358620495-pc07plvv4n958c8rrj3pco6l499vf2k3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCod3BkfVKB1KrFoDh_mkj370n5HPYvXd8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "843358620495-pc07plvv4n958c8rrj3pco6l499vf2k3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

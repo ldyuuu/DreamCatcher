@@ -96,7 +96,7 @@ fun DatabaseTest(navController: NavController, viewModel: MainViewModel) {
                     val newUser = User(
                         email = userEmail.value,
                         displayName = userName.value,
-                        passwordHash = "",
+                        //passwordHash = "",
                         preferences = "",
                         address = userAddress.value
                     )
