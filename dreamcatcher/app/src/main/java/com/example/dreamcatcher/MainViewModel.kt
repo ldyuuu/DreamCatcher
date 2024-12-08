@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.dreamcatcher.models.TherapyCenter
 import com.example.dreamcatcher.network.RetrofitInstance
 import com.google.firebase.auth.FirebaseUser
@@ -13,7 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-open class MainViewModel(application: Application) : ViewModel() {
+open class MainViewModel(application: Application,private val dataStoreManger: DataStoreManager) : ViewModel() {
     private val repository: Repository
     open val allUsers: LiveData<List<User>>
     val allDreams: LiveData<List<Dream>>
@@ -23,6 +24,9 @@ open class MainViewModel(application: Application) : ViewModel() {
 
     private val _firebaseUser = MutableStateFlow<FirebaseUser?>(null)
     val firebaseUser: StateFlow<FirebaseUser?> get() = _firebaseUser
+
+    private val _isDarkModeEnabled = MutableStateFlow(false)
+    val isDarkModeEnabled: StateFlow<Boolean> get() = _isDarkModeEnabled
 
     private val _loggedInUser = MutableStateFlow<User?>(null)
     val loggedInUser: StateFlow<User?> get() = _loggedInUser
@@ -38,12 +42,22 @@ open class MainViewModel(application: Application) : ViewModel() {
         val userDao = database.userDao()
         val dreamDao = database.dreamDao()
 
+        viewModelScope.launch {
+            dataStoreManger.isDarkModeEnabled.collect{
+                isEnabled -> _isDarkModeEnabled.value = isEnabled
+            }
+        }
+
         repository = Repository(userDao, dreamDao)
 
         allUsers = repository.allUsers
         allDreams = repository.allDreams
         searchUserResults = repository.searchUserResults
         searchDreamResults = repository.searchDreamResults
+    }
+
+    fun setDarkModeEnabled(enabled: Boolean) {
+        _isDarkModeEnabled.value = enabled
     }
 
     fun syncFirebaseUserWithLocalData(firebaseUser: FirebaseUser) {
@@ -177,6 +191,15 @@ open class MainViewModel(application: Application) : ViewModel() {
             userAddress.postValue(user?.address)
         }
     }
+
+
+    fun fetchUserLocation(address: String, apiKey: String, onResult: (Location?) -> Unit) {
+        viewModelScope.launch {
+            val location = geocodeAddress(address, apiKey)
+            onResult(location)
+        }
+    }
+
 
 
 }

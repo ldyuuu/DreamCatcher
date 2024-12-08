@@ -28,9 +28,12 @@ import androidx.lifecycle.viewModelScope
 import coil.compose.rememberAsyncImagePainter
 import com.example.dreamcatcher.MainViewModel
 import com.example.dreamcatcher.R
+import com.example.dreamcatcher.models.Location
 import com.example.dreamcatcher.models.TherapyCenter
 import com.example.dreamcatcher.network.RetrofitInstance
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -51,10 +54,24 @@ fun MapScreen(
     val therapyCenters by viewModel.therapyCenters.observeAsState(emptyList())
     val userAddress = remember { mutableStateOf<String?>(null) }
     val coroutineScope = rememberCoroutineScope()
+    val userLatLng = remember { mutableStateOf<LatLng?>(null) }
 
     LaunchedEffect(email) {
         val user = viewModel.getUserByEmailSync(email)
         userAddress.value = user?.address
+
+        user?.address?.let { address ->
+            viewModel.fetchUserLocation(address, apiKey) { location ->
+                location?.let {
+                    userLatLng.value = LatLng(it.latitude, it.longitude)
+                    cameraPositionState.position = CameraPosition.fromLatLngZoom(
+                        LatLng(it.latitude, it.longitude),
+                        12f
+                    )
+                } ?: Log.e("MapScreen", "Failed to fetch user location")
+            }
+        }
+
         viewModel.fetchTherapyCenters(email, apiKey)
     }
 
@@ -90,6 +107,14 @@ fun MapScreen(
                             Log.d("MapScreen", "Clicked on: ${center.name}")
                             true
                         }
+                    )
+                }
+
+                userLatLng.value?.let { location ->
+                    Marker(
+                        state = MarkerState(position = location),
+                        title = "You are here",
+                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
                     )
                 }
             }
@@ -315,5 +340,19 @@ fun SearchNearbyButton(
                 color = Color.Black
             )
         }
+    }
+}
+
+suspend fun geocodeAddress(address: String, apiKey: String): Location? {
+    return try {
+        val response = RetrofitInstance.geocodingAPI.geocode(address, apiKey)
+        val locationData = response.results.firstOrNull()?.geometry?.location
+
+        locationData?.let {
+            Location(lat = it.lat, lng = it.lng)
+        }
+    } catch (e: Exception) {
+        Log.e("GeocodeAddress", "Error geocoding address: ${e.message}")
+        null
     }
 }

@@ -45,6 +45,7 @@ import androidx.lifecycle.viewModelScope
 import coil.compose.rememberAsyncImagePainter
 import com.example.dreamcatcher.Dream
 import com.example.dreamcatcher.DreamDao
+import com.example.dreamcatcher.MainViewModel
 import com.example.dreamcatcher.tools.ImageGeneration
 import com.example.dreamcatcher.tools.MicRecord
 import com.example.dreamcatcher.R
@@ -127,7 +128,7 @@ open class TodayViewModel(private val dreamDao: DreamDao) : ViewModel() {
 
 
 @Composable
-fun TodayScreen(todayViewModel: TodayViewModel) {
+fun TodayScreen(todayViewModel: TodayViewModel, mainViewModel: MainViewModel) {
     val spokenTextState = todayViewModel.spokenTextState
     val isRecordingState = todayViewModel.isRecordingState
     val topMoods = todayViewModel.topMoods
@@ -136,6 +137,8 @@ fun TodayScreen(todayViewModel: TodayViewModel) {
     val isEditingState = remember { mutableStateOf(false) }
     val isGeneratingImage = remember { mutableStateOf(false) }
     val dailyImages = todayViewModel.dailyImages
+
+    val loggedInUser = mainViewModel.loggedInUser.value
 
     LaunchedEffect(Unit) {
         todayViewModel.resetState()
@@ -159,17 +162,29 @@ fun TodayScreen(todayViewModel: TodayViewModel) {
                 .background(MaterialTheme.colorScheme.background),
             contentAlignment = Alignment.Center
         ) {
-            if (dailyImages.value.isNotEmpty()) {
-                Image(
-                    painter = rememberAsyncImagePainter(model = dailyImages.value.last()),
-                    contentDescription = "Dream Image",
-                    modifier = Modifier
-                        .size(360.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Text("Press Paint to generate a dream image")
+            when {
+                isGeneratingImage.value -> {
+                    Text(
+                        text = "Generating Image...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+
+                dailyImages.value.isNotEmpty() -> {
+                    Image(
+                        painter = rememberAsyncImagePainter(model = dailyImages.value.last()),
+                        contentDescription = "Dream Image",
+                        modifier = Modifier
+                            .size(360.dp)
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                else -> {
+                    Text("Press Paint to generate a dream image")
+                }
             }
         }
 
@@ -196,8 +211,9 @@ fun TodayScreen(todayViewModel: TodayViewModel) {
                     description = "Accept",
                     label = "Accept",
                     onClick = {
+                        val userId = loggedInUser?.userId ?: return@IconButton
                         todayViewModel.saveDream(
-                            userId = 1,
+                            userId = userId,
                             aiImageURL = generatedImageUrl.value ?: "",
                             onComplete = { success ->
                                 if (!success) Log.e("TodayScreen", "Error saving dream")
@@ -282,7 +298,7 @@ fun IconButton(
             text = label,
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.padding(top = 4.dp),
-            color = if (enabled) Color.Black else Color.Gray
+            color = MaterialTheme.colorScheme.onBackground
         )
     }
 }

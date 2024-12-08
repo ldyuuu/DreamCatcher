@@ -40,7 +40,6 @@ fun SettingScreen(navController: NavController) {
         Triple("Notification", R.drawable.notification, SettingAction.OpenNotificationSettings),
         Triple("Testing", R.drawable.testing, SettingAction.OpenTestingDialog),
         Triple("Sign Out", R.drawable.back, SettingAction.SignOut) // 新增 Sign Out
-
     )
 
     LazyColumn(
@@ -58,7 +57,7 @@ fun SettingScreen(navController: NavController) {
                 onClick = {
                     when (action) {
                         is SettingAction.NavigateToAccount -> navController.navigate("account_screen")
-                        is SettingAction.ToggleTheme -> {/* Toggle theme */}
+                        is SettingAction.ToggleTheme -> navController.navigate("display_settings")
                         is SettingAction.OpenNotificationSettings -> {/* Open settings */}
                         is SettingAction.OpenTestingDialog -> navController.navigate("database_testing")
                         is SettingAction.SignOut -> {
