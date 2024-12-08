@@ -8,15 +8,22 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.dreamcatcher.models.TherapyCenter
 import com.example.dreamcatcher.network.RetrofitInstance
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-open class MainViewModel(application: Application) : ViewModel() {
+open class MainViewModel(application: Application, private val dataStoreManager: DataStoreManager) :
+    ViewModel() {
     private val repository: Repository
     open val allUsers: LiveData<List<User>>
     val allDreams: LiveData<List<Dream>>
     val searchUserResults: LiveData<User?>
     val searchDreamResults: LiveData<List<Dream>>
     val userAddress = MutableLiveData<String?>()
+    private val _isDarkModeEnabled = MutableStateFlow(false)
+    val isDarkModeEnabled: StateFlow<Boolean> get() = _isDarkModeEnabled
+
 
     private val _therapyCenters = MutableLiveData<List<TherapyCenter>>()
     open val therapyCenters: MutableLiveData<List<TherapyCenter>> get() = _therapyCenters
@@ -33,6 +40,10 @@ open class MainViewModel(application: Application) : ViewModel() {
         allDreams = repository.allDreams
         searchUserResults = repository.searchUserResults
         searchDreamResults = repository.searchDreamResults
+
+        viewModelScope.launch {
+            _isDarkModeEnabled.value = dataStoreManager.isDarkModeEnabled.first()
+        }
     }
 
     // 用户操作方法
@@ -105,7 +116,11 @@ open class MainViewModel(application: Application) : ViewModel() {
 
     }
 
-    private suspend fun findNearbyTherapies(lat: Double, lng: Double, apiKey: String): List<com.example.dreamcatcher.models.TherapyCenter> {
+    private suspend fun findNearbyTherapies(
+        lat: Double,
+        lng: Double,
+        apiKey: String
+    ): List<com.example.dreamcatcher.models.TherapyCenter> {
         return try {
             val location = "$lat,$lng"
             val response = RetrofitInstance.placesAPI.findPlaces(
@@ -135,13 +150,19 @@ open class MainViewModel(application: Application) : ViewModel() {
         }
     }
 
-    fun fetchUserAddress(email: String) {
+    fun fetchUserLocation(address: String, apiKey: String, onResult: (Location?) -> Unit) {
         viewModelScope.launch {
-            val user = repository.getUserByEmail(email)
-            userAddress.postValue(user?.address)
+            val location = geocodeAddress(address, apiKey)
+            onResult(location)
         }
     }
 
+    fun setDarkModeEnabled(isEnabled: Boolean) {
+        viewModelScope.launch {
+            _isDarkModeEnabled.value = isEnabled
+            dataStoreManager.setDarkModeEnabled(isEnabled)
+        }
+    }
 
 }
 

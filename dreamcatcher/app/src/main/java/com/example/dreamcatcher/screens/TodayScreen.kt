@@ -159,17 +159,29 @@ fun TodayScreen(todayViewModel: TodayViewModel) {
                 .background(MaterialTheme.colorScheme.background),
             contentAlignment = Alignment.Center
         ) {
-            if (dailyImages.value.isNotEmpty()) {
-                Image(
-                    painter = rememberAsyncImagePainter(model = dailyImages.value.last()),
-                    contentDescription = "Dream Image",
-                    modifier = Modifier
-                        .size(360.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Text("Press Paint to generate a dream image")
+            when {
+                isGeneratingImage.value -> {
+                    Text(
+                        text = "Generating Image...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+
+                dailyImages.value.isNotEmpty() -> {
+                    Image(
+                        painter = rememberAsyncImagePainter(model = dailyImages.value.last()),
+                        contentDescription = "Dream Image",
+                        modifier = Modifier
+                            .size(360.dp)
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                else -> {
+                    Text("Press Paint to generate a dream image")
+                }
             }
         }
 
@@ -282,7 +294,7 @@ fun IconButton(
             text = label,
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.padding(top = 4.dp),
-            color = if (enabled) Color.Black else Color.Gray
+            color = MaterialTheme.colorScheme.onBackground
         )
     }
 }

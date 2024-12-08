@@ -1,6 +1,7 @@
 package com.example.dreamcatcher
 
 import android.app.Application
+import android.provider.ContactsContract.Data
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,13 +24,16 @@ import androidx.navigation.NavHostController
 @Composable
 fun DatabaseTestScreen(navController: NavHostController) {
     val owner = LocalViewModelStoreOwner.current
+    val context = LocalContext.current
+    val dataStoreManager = DataStoreManager(context)
 
     owner?.let {
         val viewModel: MainViewModel = viewModel(
             it,
             "MainViewModel",
             MainViewModelFactory(
-                LocalContext.current.applicationContext as Application
+                LocalContext.current.applicationContext as Application,
+                dataStoreManager = dataStoreManager
             )
         )
 

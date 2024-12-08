@@ -2,6 +2,7 @@ package com.example.dreamcatcher
 
 import android.app.Application
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.dreamcatcher.screens.CalendarScreen
+import com.example.dreamcatcher.screens.DisplaySettingsScreen
 import com.example.dreamcatcher.screens.DreamDetailScreen
 import com.example.dreamcatcher.screens.HomeScreen
 import com.example.dreamcatcher.screens.MapScreen
@@ -48,6 +50,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val dataStoreManager = DataStoreManager(applicationContext)
         val database = DreamcatcherRoomDatabase.getInstance(applicationContext)
         val dreamDao = database.dreamDao()
         val viewModel: MainViewModel
@@ -55,7 +58,7 @@ class MainActivity : ComponentActivity() {
             this,
             TodayViewModelFactory(dreamDao)
         )[TodayViewModel::class.java]
-        val factory = MainViewModelFactory(application)
+        val factory = MainViewModelFactory(application, dataStoreManager)
         viewModel = ViewModelProvider(this, factory)[MainViewModel::class.java]
 
 
@@ -64,55 +67,91 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             DreamcatcherTheme {
-                MainApp(viewModel = viewModel, userId = 1,apiKey = apiKey,email = email)//user Id comes from other page
+                MainApp(viewModel = viewModel, userId = 1, apiKey = apiKey, email = email)
             }
         }
     }
 }
 
 @Composable
-fun MainApp(viewModel: MainViewModel, userId: Int, apiKey:String, email:String) {
+fun MainApp(viewModel: MainViewModel, userId: Int, apiKey: String, email: String) {
     val navController = rememberNavController()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val todayViewModel: TodayViewModel = viewModel()
     val currentRoute = currentBackStackEntry?.destination?.route
+    val isDarkModeEnabled by viewModel.isDarkModeEnabled.collectAsState(initial = false)
+    val context = LocalContext.current
+    val dataStoreManager = DataStoreManager(context)
 
-    Scaffold(
-        topBar = { TopBar(currentRoute = currentRoute) },
-        bottomBar = { BottomNavigationBar(navController = navController) }
-    ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = "home",
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            composable("home") { HomeScreen() }
-            composable("today") { TodayScreen(todayViewModel = todayViewModel) }
-            composable("calendar") {
-                CalendarScreen(
-                    viewModel = viewModel,
-                    userId = userId,
-                    onDateSelected = { selectedDate ->
-                        // 跳转到梦境详情页面，传递选中的日期
-                        navController.navigate("dreamDetail/$selectedDate")
-                    }
-                )
-            }
-            composable("dreamDetail/{selectedDate}") { backStackEntry ->
-                // 获取传递的日期参数
-                val selectedDate = backStackEntry.arguments?.getString("selectedDate") ?: ""
-                DreamDetailScreen(
-                    viewModel = viewModel,
-                    userId = userId,
-                    date = selectedDate,
-                    onBack = { navController.popBackStack() }
-                )
-            }
-            composable("map") { MapScreen(email = email, apiKey = apiKey, viewModel = viewModel) }
-            composable("settings") { SettingScreen(navController = navController) }
-            composable("database_testing") {
-                val mainViewModel: MainViewModel = viewModel(factory = MainViewModelFactory(LocalContext.current.applicationContext as Application))
-                DatabaseTest(navController = navController,viewModel = mainViewModel)
+    MaterialTheme(colorScheme = if (isDarkModeEnabled) darkColorScheme() else lightColorScheme()) {
+        Scaffold(
+            topBar = { TopBar(currentRoute = currentRoute) },
+            bottomBar = { BottomNavigationBar(navController = navController) }
+        ) { innerPadding ->
+            NavHost(
+                navController = navController,
+                startDestination = "home",
+                modifier = Modifier.padding(innerPadding)
+            ) {
+                composable("home") { HomeScreen() }
+                composable("today") { TodayScreen(todayViewModel = todayViewModel) }
+                composable("calendar") {
+                    CalendarScreen(
+                        viewModel = viewModel,
+                        userId = userId,
+                        onDateSelected = { selectedDate ->
+                            // 跳转到梦境详情页面，传递选中的日期
+                            navController.navigate("dreamDetail/$selectedDate")
+                        }
+                    )
+                }
+                composable("dreamDetail/{selectedDate}") { backStackEntry ->
+                    // 获取传递的日期参数
+                    val selectedDate = backStackEntry.arguments?.getString("selectedDate") ?: ""
+                    DreamDetailScreen(
+                        viewModel = viewModel,
+                        userId = userId,
+                        date = selectedDate,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable("map") {
+                    MapScreen(
+                        email = email,
+                        apiKey = apiKey,
+                        viewModel = viewModel
+                    )
+                }
+                composable("settings") { SettingScreen(navController = navController) }
+                composable("database_testing") {
+                    val context = LocalContext.current
+                    val dataStoreManager = DataStoreManager(context)
+
+                    val mainViewModel: MainViewModel = viewModel(
+                        factory = MainViewModelFactory(
+                            application = context.applicationContext as Application,
+                            dataStoreManager = dataStoreManager
+                        )
+                    )
+                    DatabaseTest(navController = navController, viewModel = mainViewModel)
+                }
+
+
+                composable("display_settings") {
+                    DisplaySettingsScreen(
+                        isDarkModeEnabled = isDarkModeEnabled,
+                        onDarkModeToggle = { isEnabled ->
+                            viewModel.setDarkModeEnabled(isEnabled)
+                        },
+                        onCustomizeHomePage = {
+                            navController.navigate("customize_home_page")
+                        },
+                        onBack = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+
             }
         }
     }
@@ -127,7 +166,6 @@ fun GreetingPreview() {
 }
 
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBar(currentRoute: String?) {
@@ -139,7 +177,8 @@ fun TopBar(currentRoute: String?) {
         "map" to "Map",
         "settings" to "Settings",
         "dreamDetail/{selectedDate}" to "Dream Detail",
-        "database_testing" to "Database Testing"
+        "database_testing" to "Database Testing",
+//        "display_setting" to "Settings"
     )
     val screenTitle = screenTitles[currentRoute] ?: "Home"
 
@@ -198,7 +237,7 @@ fun BottomNavigationBar(
                 },
                 icon = {
                     Icon(
-                        painter = painterResource(id=iconRes),
+                        painter = painterResource(id = iconRes),
                         contentDescription = route,
                         modifier = Modifier.size(if (selected) 30.dp else 24.dp),
                         tint = Color.Unspecified
@@ -216,13 +255,16 @@ fun BottomNavigationBar(
 }
 
 
-class MainViewModelFactory(private val application: Application) : ViewModelProvider.Factory {
+class MainViewModelFactory(
+    private val application: Application,
+    private val dataStoreManager: DataStoreManager
+) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         // 验证 ViewModel 类型
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
-            return MainViewModel(application) as T
+            return MainViewModel(application, dataStoreManager) as T
         }
         // 抛出异常以防止错误类型
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")

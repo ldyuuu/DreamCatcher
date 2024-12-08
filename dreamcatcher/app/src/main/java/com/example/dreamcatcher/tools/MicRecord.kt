@@ -100,7 +100,7 @@ fun MicRecord(
                     text = "Press the microphone to speak",
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(top = 8.dp),
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             }
         }
