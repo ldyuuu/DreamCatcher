@@ -8,6 +8,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.dreamcatcher.models.TherapyCenter
 import com.example.dreamcatcher.network.RetrofitInstance
+import com.google.firebase.auth.FirebaseUser
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 open class MainViewModel(application: Application) : ViewModel() {
@@ -18,11 +21,19 @@ open class MainViewModel(application: Application) : ViewModel() {
     val searchDreamResults: LiveData<List<Dream>>
     val userAddress = MutableLiveData<String?>()
 
+    private val _firebaseUser = MutableStateFlow<FirebaseUser?>(null)
+    val firebaseUser: StateFlow<FirebaseUser?> get() = _firebaseUser
+
+    private val _loggedInUser = MutableStateFlow<User?>(null)
+    val loggedInUser: StateFlow<User?> get() = _loggedInUser
+
+    fun updateFirebaseUser(user: FirebaseUser?) {
+        _firebaseUser.value = user
+    }
     private val _therapyCenters = MutableLiveData<List<TherapyCenter>>()
     open val therapyCenters: MutableLiveData<List<TherapyCenter>> get() = _therapyCenters
 
     init {
-
         val database = DreamcatcherRoomDatabase.getInstance(application)
         val userDao = database.userDao()
         val dreamDao = database.dreamDao()
@@ -35,7 +46,32 @@ open class MainViewModel(application: Application) : ViewModel() {
         searchDreamResults = repository.searchDreamResults
     }
 
-    // 用户操作方法
+    fun syncFirebaseUserWithLocalData(firebaseUser: FirebaseUser) {
+        viewModelScope.launch {
+            val email = firebaseUser.email ?: return@launch
+            val localUser = repository.getUserByEmailSync(email)
+
+            val user = if (localUser == null) {
+                val newUser = User(
+                    displayName = firebaseUser.displayName ?: "Unknown",
+                    email = email,
+                    createdAt = System.currentTimeMillis(),
+                    preferences = null,
+                    address = null
+                )
+                repository.insertUser(newUser)
+                repository.getUserByEmailSync(email) // 获取插入后的用户
+            } else {
+                localUser
+            }
+            _loggedInUser.value = user // 更新当前登录用户
+        }
+    }
+
+    fun updateLoggedInUser(user: User?) {
+        _loggedInUser.value = user
+    }
+
     open fun addUser(user: User) {
         repository.insertUser(user)
     }

@@ -17,8 +17,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.dreamcatcher.AuthManager
 import com.example.dreamcatcher.R
 import com.example.dreamcatcher.ui.theme.DreamcatcherTheme
+import com.google.firebase.auth.FirebaseAuth
 
 
 sealed class SettingAction {
@@ -26,6 +28,7 @@ sealed class SettingAction {
     object ToggleTheme : SettingAction()
     object OpenNotificationSettings : SettingAction()
     object OpenTestingDialog : SettingAction()
+    object SignOut : SettingAction() // 新增 Sign Out 动作
 }
 
 
@@ -35,7 +38,9 @@ fun SettingScreen(navController: NavController) {
         Triple("Account", R.drawable.account, SettingAction.NavigateToAccount),
         Triple("Display", R.drawable.display, SettingAction.ToggleTheme),
         Triple("Notification", R.drawable.notification, SettingAction.OpenNotificationSettings),
-        Triple("Testing", R.drawable.testing, SettingAction.OpenTestingDialog)
+        Triple("Testing", R.drawable.testing, SettingAction.OpenTestingDialog),
+        Triple("Sign Out", R.drawable.back, SettingAction.SignOut) // 新增 Sign Out
+
     )
 
     LazyColumn(
@@ -56,6 +61,13 @@ fun SettingScreen(navController: NavController) {
                         is SettingAction.ToggleTheme -> {/* Toggle theme */}
                         is SettingAction.OpenNotificationSettings -> {/* Open settings */}
                         is SettingAction.OpenTestingDialog -> navController.navigate("database_testing")
+                        is SettingAction.SignOut -> {
+                            FirebaseAuth.getInstance().signOut() // 执行退出登录
+                            navController.navigate("login") {
+                                AuthManager.isLoggedIn.value = false
+                                popUpTo(0) { inclusive = true } // 清除导航历史，防止回退
+                            }
+                        }
                     }
                 }
             )
