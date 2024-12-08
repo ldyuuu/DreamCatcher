@@ -45,6 +45,7 @@ import androidx.lifecycle.viewModelScope
 import coil.compose.rememberAsyncImagePainter
 import com.example.dreamcatcher.Dream
 import com.example.dreamcatcher.DreamDao
+import com.example.dreamcatcher.MainViewModel
 import com.example.dreamcatcher.tools.ImageGeneration
 import com.example.dreamcatcher.tools.MicRecord
 import com.example.dreamcatcher.R
@@ -127,7 +128,7 @@ open class TodayViewModel(private val dreamDao: DreamDao) : ViewModel() {
 
 
 @Composable
-fun TodayScreen(todayViewModel: TodayViewModel) {
+fun TodayScreen(todayViewModel: TodayViewModel, mainViewModel: MainViewModel) {
     val spokenTextState = todayViewModel.spokenTextState
     val isRecordingState = todayViewModel.isRecordingState
     val topMoods = todayViewModel.topMoods
@@ -136,6 +137,8 @@ fun TodayScreen(todayViewModel: TodayViewModel) {
     val isEditingState = remember { mutableStateOf(false) }
     val isGeneratingImage = remember { mutableStateOf(false) }
     val dailyImages = todayViewModel.dailyImages
+
+    val loggedInUser = mainViewModel.loggedInUser.value
 
     LaunchedEffect(Unit) {
         todayViewModel.resetState()
@@ -208,8 +211,9 @@ fun TodayScreen(todayViewModel: TodayViewModel) {
                     description = "Accept",
                     label = "Accept",
                     onClick = {
+                        val userId = loggedInUser?.userId ?: return@IconButton
                         todayViewModel.saveDream(
-                            userId = 1,
+                            userId = userId,
                             aiImageURL = generatedImageUrl.value ?: "",
                             onComplete = { success ->
                                 if (!success) Log.e("TodayScreen", "Error saving dream")

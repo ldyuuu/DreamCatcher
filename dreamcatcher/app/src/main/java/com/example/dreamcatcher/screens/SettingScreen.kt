@@ -40,7 +40,6 @@ fun SettingScreen(navController: NavController) {
         Triple("Notification", R.drawable.notification, SettingAction.OpenNotificationSettings),
         Triple("Testing", R.drawable.testing, SettingAction.OpenTestingDialog),
         Triple("Sign Out", R.drawable.back, SettingAction.SignOut) // 新增 Sign Out
-
     )
 
     LazyColumn(

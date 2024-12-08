@@ -1,5 +1,6 @@
 package com.example.dreamcatcher.screens
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -70,15 +71,18 @@ fun DisplaySettingsScreen(
             )
             Switch(
                 checked = isDarkModeEnabled,
+                onCheckedChange = {onDarkModeToggle(it) },
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = MaterialTheme.colorScheme.background,
                     uncheckedThumbColor = MaterialTheme.colorScheme.onBackground,
                     checkedTrackColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                     uncheckedTrackColor = MaterialTheme.colorScheme.background.copy(alpha = 0.3f)
-                ),
-                onCheckedChange = { onDarkModeToggle(it) }
+                )
+
             )
         }
+
+        Log.d("MainApp", "Dark mode is enabled: $isDarkModeEnabled")
 
         // Customize Home Page Button
         Button(
@@ -93,14 +97,14 @@ fun DisplaySettingsScreen(
     }
 }
 
-
-@Preview(showBackground = true)
-@Composable
-fun DisplaySettingsScreenPreview() {
-    DisplaySettingsScreen(
-        isDarkModeEnabled = false,
-        onDarkModeToggle = {},
-        onCustomizeHomePage = {},
-        onBack = {}
-    )
-}
+//
+//@Preview(showBackground = true)
+//@Composable
+//fun DisplaySettingsScreenPreview() {
+//    DisplaySettingsScreen(
+//        isDarkModeEnabled = false,
+//        onDarkModeToggle = {},
+//        onCustomizeHomePage = {},
+//        onBack = {}
+//    )
+//}
