@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -26,7 +27,12 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.dreamcatcher.Dream
 import com.example.dreamcatcher.MainViewModel
@@ -58,16 +64,30 @@ fun DreamDetailScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         // 返回按钮
-        Box(
+        Row(
             modifier = Modifier
                 .padding(16.dp)
-                .align(Alignment.TopStart)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
         ) {
             IconButton(
-                iconRes = R.drawable.back,
+                iconRes = R.drawable.backslim,
                 description = "Back",
                 label = "",
                 onClick = onBack
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = date,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontFamily = FontFamily(Font(R.font.britannic)),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 30.sp,
+                    lineHeight = 20.sp
+                ),
+                modifier = Modifier.height(50.dp)
             )
         }
 
@@ -110,7 +130,11 @@ fun DreamDetailScreen(
 }
 
 @Composable
-fun LazyDreamInfoView(dreams: List<Dream>, moodIcons: Map<String, Int>, modifier: Modifier = Modifier) {
+fun LazyDreamInfoView(
+    dreams: List<Dream>,
+    moodIcons: Map<String, Int>,
+    modifier: Modifier = Modifier
+) {
     androidx.compose.foundation.lazy.LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -138,10 +162,10 @@ fun LazyDreamInfoView(dreams: List<Dream>, moodIcons: Map<String, Int>, modifier
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // 显示梦境信息
-                Text(text = "Date: $formattedDate", style = MaterialTheme.typography.titleMedium)
+//                Text(text = "Date: $formattedDate", style = MaterialTheme.typography.titleMedium)
                 Text(
                     text = "Dream: ${dream.content}",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyLarge
                 )
                 val moodWithIcons = formatMoodWithIcons(dream.mood, moodIcons)
                 MoodDisplayWithIcons(moods = moodWithIcons)
@@ -216,3 +240,5 @@ fun MoodDisplayWithIcons(
         }
     }
 }
+
+
