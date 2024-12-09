@@ -40,10 +40,19 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.example.dreamcatcher.Dream
 import com.example.dreamcatcher.MainViewModel
+import org.json.JSONArray
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
+fun parseMood(jsonString: String): String {
+    return try {
+        val jsonArray = JSONArray(jsonString)
+        val mood = jsonArray.getJSONObject(0) // Assuming the first mood is the most significant
+        mood.getString("label")
+    } catch (e: Exception) {
+        "Unknown"
+    }
+}
 @Composable
 fun CalendarScreen(
     viewModel: MainViewModel,
@@ -191,8 +200,9 @@ fun MonthView(
                                 style = MaterialTheme.typography.bodySmall
                             )
                             if (dreams.isNotEmpty()) {
+                                val moodLabel = parseMood(dreams.firstOrNull()?.mood ?: "")
                                 Text(
-                                    text = dreams.firstOrNull()?.mood ?: "",
+                                    text = moodLabel ?: "",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.primary
                                 )
