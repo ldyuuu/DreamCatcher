@@ -39,6 +39,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.dreamcatcher.screens.AccountScreen
 import com.example.dreamcatcher.screens.CalendarScreen
 import com.example.dreamcatcher.screens.DisplaySettingsScreen
 import com.example.dreamcatcher.screens.DreamDetailScreen
@@ -215,12 +216,14 @@ fun MainApp(
                 }
                 composable("dreamDetail/{selectedDate}") { backStackEntry ->
                     val selectedDate = backStackEntry.arguments?.getString("selectedDate") ?: ""
-                    DreamDetailScreen(
-                        viewModel = viewModel,
-                        userId = 1,
-                        date = selectedDate,
-                        onBack = { navController.popBackStack() }
-                    )
+                    loggedInUser?.let { user ->
+                        DreamDetailScreen(
+                            viewModel = viewModel,
+                            userId = user.userId,
+                            date = selectedDate,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
                 }
                 composable("map") {
                     MapScreen(
@@ -240,13 +243,22 @@ fun MainApp(
 
                     DatabaseTest(navController = navController, viewModel = mainViewModel)
                 }
-
-                composable("account_screen") {
-                    EditAccountScreen(
-                        mainViewModel = viewModel,
+                composable("display_settings") {
+                    DisplaySettingsScreen(
+                        isDarkModeEnabled = isDarkModeEnabled,
+                        onDarkModeToggle = { viewModel.setDarkModeEnabled(it) },
+                        onCustomizeHomePage = { navController.navigate("customize_home_page") },
                         onBack = { navController.popBackStack() }
                     )
                 }
+                composable("account_screen") {
+                    AccountScreen(
+                        viewModel = viewModel,
+                        onBack={  navController.popBackStack() }
+                        //onLogout = { currentScreen = "Login" }
+                    )
+                }
+
 
                 composable("display_settings") {
                     DisplaySettingsScreen(
@@ -284,8 +296,8 @@ fun TopBar(currentRoute: String?) {
         "settings" to "Settings",
         "dreamDetail/{selectedDate}" to "Dream Detail",
         "database_testing" to "Database Testing",
-        "account_screen" to "Edit Account",
-        "display_settings" to "Display Settings"
+        "account_screen" to "Account",
+        "display_settings" to "Display"
     )
     val screenTitle = screenTitles[currentRoute] ?: "Home"
 
