@@ -46,7 +46,6 @@ import com.google.maps.android.compose.CameraPositionState
 
 @Composable
 fun MapScreen(
-    email: String,
     apiKey: String,
     viewModel: MainViewModel
 ) {
@@ -55,24 +54,29 @@ fun MapScreen(
     val userAddress = remember { mutableStateOf<String?>(null) }
     val coroutineScope = rememberCoroutineScope()
     val userLatLng = remember { mutableStateOf<LatLng?>(null) }
+    val loggedInUser by viewModel.loggedInUser.collectAsState()
+    val email = loggedInUser?.email
 
     LaunchedEffect(email) {
-        val user = viewModel.getUserByEmailSync(email)
-        userAddress.value = user?.address
+        email?.let {
+            val user = viewModel.getUserByEmailSync(it)
+            userAddress.value = user?.address
+            Log.e("MapScreen", "User: ${user?.userId} User Address: ${user?.address}")
 
-        user?.address?.let { address ->
-            viewModel.fetchUserLocation(address, apiKey) { location ->
-                location?.let {
-                    userLatLng.value = LatLng(it.latitude, it.longitude)
-                    cameraPositionState.position = CameraPosition.fromLatLngZoom(
-                        LatLng(it.latitude, it.longitude),
-                        12f
-                    )
-                } ?: Log.e("MapScreen", "Failed to fetch user location")
+            user?.address?.let { address ->
+                viewModel.fetchUserLocation(address, apiKey) { location ->
+                    location?.let {
+                        userLatLng.value = LatLng(it.latitude, it.longitude)
+                        cameraPositionState.position = CameraPosition.fromLatLngZoom(
+                            LatLng(it.latitude, it.longitude),
+                            12f
+                        )
+                    } ?: Log.e("MapScreen", "Failed to fetch user location")
+                }
             }
-        }
 
-        viewModel.fetchTherapyCenters(email, apiKey)
+            viewModel.fetchTherapyCenters(email, apiKey)
+        }
     }
 
     LaunchedEffect(therapyCenters) {

@@ -42,6 +42,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.dreamcatcher.screens.CalendarScreen
 import com.example.dreamcatcher.screens.DisplaySettingsScreen
 import com.example.dreamcatcher.screens.DreamDetailScreen
+import com.example.dreamcatcher.screens.EditAccountScreen
 import com.example.dreamcatcher.screens.HomeScreen
 import com.example.dreamcatcher.screens.MapScreen
 
@@ -219,7 +220,6 @@ fun MainApp(
                 }
                 composable("map") {
                     MapScreen(
-                        email = "test@gmail.com",
                         apiKey = BuildConfig.GOOGLE_MAP_API_KEY,
                         viewModel = viewModel
                     )
@@ -237,8 +237,12 @@ fun MainApp(
                     DatabaseTest(navController = navController, viewModel = mainViewModel)
                 }
 
-
-
+                composable("account_screen") {
+                    EditAccountScreen(
+                        mainViewModel = viewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
 
                 composable("display_settings") {
                     DisplaySettingsScreen(
