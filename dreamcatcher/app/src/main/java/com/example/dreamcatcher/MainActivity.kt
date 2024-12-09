@@ -279,7 +279,9 @@ fun TopBar(currentRoute: String?) {
         "map" to "Map",
         "settings" to "Settings",
         "dreamDetail/{selectedDate}" to "Dream Detail",
-        "database_testing" to "Database Testing"
+        "database_testing" to "Database Testing",
+        "account_screen" to "Edit Account",
+        "display_settings" to "Display Settings"
     )
     val screenTitle = screenTitles[currentRoute] ?: "Home"
 

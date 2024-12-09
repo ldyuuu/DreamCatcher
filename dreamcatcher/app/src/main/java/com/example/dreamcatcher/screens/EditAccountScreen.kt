@@ -27,7 +27,7 @@ fun EditAccountScreen(
 
     // Local state for editing user fields
     var email by remember { mutableStateOf(loggedInUser?.email ?: "") }
-    var password by remember { mutableStateOf("") } // Password shouldn't be fetched for security
+    var password by remember { mutableStateOf("") }
     var address by remember { mutableStateOf(loggedInUser?.address ?: "") }
 
     var isSaving by remember { mutableStateOf(false) }
@@ -48,11 +48,6 @@ fun EditAccountScreen(
                     contentDescription = "Back"
                 )
             }
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Edit Account Information",
-                style = MaterialTheme.typography.headlineMedium
-            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -113,10 +108,10 @@ fun EditAccountScreen(
             if (isSaving) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.onPrimary
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             } else {
-                Text("Save Changes")
+                Text("Save Changes", color = MaterialTheme.colorScheme.background)
             }
         }
     }
