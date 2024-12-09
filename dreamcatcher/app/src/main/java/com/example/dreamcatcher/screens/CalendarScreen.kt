@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import java.util.Calendar
 import androidx.compose.material3.Text
+import androidx.compose.runtime.collectAsState
 
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
@@ -49,6 +50,14 @@ fun CalendarScreen(
     userId: Int,
     onDateSelected: (String) -> Unit
 ) {
+    val loggedInUser by viewModel.loggedInUser.collectAsState()
+
+    if (loggedInUser == null) {
+        // 显示加载占位符
+        Text("Loading user data...")
+        return
+    }
+
     val calendar = remember { Calendar.getInstance() }
     val scrollState = rememberLazyListState(initialFirstVisibleItemIndex = 0)
 
