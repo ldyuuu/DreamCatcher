@@ -39,6 +39,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.dreamcatcher.screens.AccountScreen
 import com.example.dreamcatcher.screens.CalendarScreen
 import com.example.dreamcatcher.screens.DisplaySettingsScreen
 import com.example.dreamcatcher.screens.DreamDetailScreen
@@ -238,10 +239,21 @@ fun MainApp(
 
                     DatabaseTest(navController = navController, viewModel = mainViewModel)
                 }
-
-
-
-
+                composable("display_settings") {
+                    DisplaySettingsScreen(
+                        isDarkModeEnabled = isDarkModeEnabled,
+                        onDarkModeToggle = { viewModel.setDarkModeEnabled(it) },
+                        onCustomizeHomePage = { navController.navigate("customize_home_page") },
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+                composable("account_screen") {
+                    AccountScreen(
+                        viewModel = viewModel,
+                        onBack={  navController.popBackStack() }
+                        //onLogout = { currentScreen = "Login" }
+                    )
+                }
                 composable("display_settings") {
                     DisplaySettingsScreen(
                         isDarkModeEnabled = isDarkModeEnabled,
@@ -277,7 +289,9 @@ fun TopBar(currentRoute: String?) {
         "map" to "Map",
         "settings" to "Settings",
         "dreamDetail/{selectedDate}" to "Dream Detail",
-        "database_testing" to "Database Testing"
+        "database_testing" to "Database Testing",
+        "account_screen" to "Account",
+        "display_settings" to "Display"
     )
     val screenTitle = screenTitles[currentRoute] ?: "Home"
 
