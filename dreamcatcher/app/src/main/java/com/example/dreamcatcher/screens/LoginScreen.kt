@@ -71,7 +71,8 @@ fun LoginScreen(onLoginSuccess: () -> Unit,viewModel: MainViewModel) {
                                 viewModel.syncFirebaseUserWithLocalData(user)
 
                                 Toast.makeText(context, "Registered Successfully!", Toast.LENGTH_SHORT).show()
-                            onLoginSuccess()}
+
+                                onLoginSuccess()}
                         } else {
                             errorMessage = task.exception?.message
                         }

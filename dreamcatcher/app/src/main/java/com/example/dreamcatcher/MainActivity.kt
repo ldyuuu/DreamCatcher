@@ -159,7 +159,11 @@ fun MainApp(
             }
         }
     }
+    LaunchedEffect(loggedInUser) {
+        if (loggedInUser == null) {
 
+        }
+    }
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
 

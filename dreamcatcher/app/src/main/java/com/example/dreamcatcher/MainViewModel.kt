@@ -76,7 +76,8 @@ open class MainViewModel(application: Application,private val dataStoreManger: D
                     address = null
                 )
                 repository.insertUser(newUser)
-                repository.getUserByEmailSync(email) // 获取插入后的用户
+                newUser
+                //repository.getUserByEmailSync(email) // 获取插入后的用户
             } else {
                 localUser
             }
