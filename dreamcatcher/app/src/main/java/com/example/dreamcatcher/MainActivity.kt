@@ -43,6 +43,7 @@ import com.example.dreamcatcher.screens.AccountScreen
 import com.example.dreamcatcher.screens.CalendarScreen
 import com.example.dreamcatcher.screens.DisplaySettingsScreen
 import com.example.dreamcatcher.screens.DreamDetailScreen
+import com.example.dreamcatcher.screens.EditAccountScreen
 import com.example.dreamcatcher.screens.HomeScreen
 import com.example.dreamcatcher.screens.MapScreen
 
@@ -159,7 +160,11 @@ fun MainApp(
             }
         }
     }
+    LaunchedEffect(loggedInUser) {
+        if (loggedInUser == null) {
 
+        }
+    }
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
 
@@ -222,7 +227,6 @@ fun MainApp(
                 }
                 composable("map") {
                     MapScreen(
-                        email = "test@gmail.com",
                         apiKey = BuildConfig.GOOGLE_MAP_API_KEY,
                         viewModel = viewModel
                     )
@@ -254,6 +258,8 @@ fun MainApp(
                         //onLogout = { currentScreen = "Login" }
                     )
                 }
+
+
                 composable("display_settings") {
                     DisplaySettingsScreen(
                         isDarkModeEnabled = isDarkModeEnabled,

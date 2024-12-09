@@ -57,7 +57,9 @@ open class MainViewModel(application: Application,private val dataStoreManger: D
     }
 
     fun setDarkModeEnabled(enabled: Boolean) {
-        _isDarkModeEnabled.value = enabled
+        viewModelScope.launch {
+            dataStoreManger.setDarkModeEnabled(enabled)
+        }
     }
 
     fun syncFirebaseUserWithLocalData(firebaseUser: FirebaseUser) {
@@ -115,6 +117,11 @@ open class MainViewModel(application: Application,private val dataStoreManger: D
         repository.findDreamsByDate(date)
     }
 
+    fun saveUserToDatabase(user: User) {
+        viewModelScope.launch {
+            repository.insertUser(user)
+        }
+    }
 
     fun fetchTherapyCenters(email: String, apiKey: String) {
         viewModelScope.launch {

@@ -23,4 +23,8 @@ class DataStoreManager(private val context: Context) {
             preferences[DARK_MODE_KEY] = isEnabled
         }
     }
+
+    private object PreferencesKeys {
+        val IS_DARK_MODE_ENABLED = booleanPreferencesKey("dark_mode")
+    }
 }
