@@ -158,11 +158,7 @@ fun MainApp(
             }
         }
     }
-    LaunchedEffect(loggedInUser) {
-        if (loggedInUser == null) {
-
-        }
-    }
+    
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
 
@@ -214,12 +210,14 @@ fun MainApp(
                 }
                 composable("dreamDetail/{selectedDate}") { backStackEntry ->
                     val selectedDate = backStackEntry.arguments?.getString("selectedDate") ?: ""
-                    DreamDetailScreen(
-                        viewModel = viewModel,
-                        userId = 1,
-                        date = selectedDate,
-                        onBack = { navController.popBackStack() }
-                    )
+                    loggedInUser?.let { user ->
+                        DreamDetailScreen(
+                            viewModel = viewModel,
+                            userId = user.userId,
+                            date = selectedDate,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
                 }
                 composable("map") {
                     MapScreen(
