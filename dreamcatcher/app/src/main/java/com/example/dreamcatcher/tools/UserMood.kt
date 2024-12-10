@@ -4,13 +4,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -21,9 +17,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.dreamcatcher.R
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 val moodIcons = mapOf(
     "anger" to R.drawable.anger,
@@ -76,11 +69,9 @@ fun formatMoodWithIcons(
     moodIcons: Map<String, Int>
 ): List<Pair<Int, String>> {
     return try {
-        // Parse the JSON string into a JsonArray
         val gson = com.google.gson.Gson()
         val jsonArray = gson.fromJson(moodJson, com.google.gson.JsonArray::class.java)
 
-        // Process each JsonObject and associate the icon with the formatted text
         jsonArray.mapNotNull { element ->
             val label = element.asJsonObject["label"].asString
             val score = (element.asJsonObject["score"].asFloat * 100).toInt()

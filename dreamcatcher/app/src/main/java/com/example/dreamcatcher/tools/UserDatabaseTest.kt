@@ -54,7 +54,7 @@ fun DatabaseTest(navController: NavController, viewModel: MainViewModel) {
             navigationIcon = {
                 IconButton(onClick = { navController.popBackStack() }) {
                     Icon(
-                        painter = painterResource(id = R.drawable.back), // Replace with your back icon resource
+                        painter = painterResource(id = R.drawable.back),
                         contentDescription = "Back"
                     )
                 }

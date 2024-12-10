@@ -35,8 +35,6 @@ import java.util.Locale
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -91,7 +89,7 @@ fun HomeScreen(dreams: List<Dream>) {
         // Graph placeholder
         item {
             Text(
-                text = "Mood Trends",
+                text = "7-Days Mood",
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -103,7 +101,7 @@ fun HomeScreen(dreams: List<Dream>) {
                     .fillMaxWidth()
                     .padding(8.dp),
                 elevation = CardDefaults.elevatedCardElevation(8.dp),
-                shape = MaterialTheme.shapes.medium // Ensures rounded corners
+                shape = MaterialTheme.shapes.medium
             ) {
                 Column(
                     modifier = Modifier
@@ -111,8 +109,46 @@ fun HomeScreen(dreams: List<Dream>) {
                         .padding(16.dp)
                 ) {
                     if (dreams.isNotEmpty()) {
-                        CustomBarChart(
+                        BarChart(
                             moodData = aggregateMoodData(dreams, days = 7),
+                            barColor = MaterialTheme.colorScheme.primary,
+                            textColor = MaterialTheme.colorScheme.onBackground
+                        )
+                    } else {
+                        Text(
+                            text = "No dreams available to display trends.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(vertical = 16.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        item {
+            Text(
+                text = "30-Days Mood",
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
+
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                elevation = CardDefaults.elevatedCardElevation(8.dp),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Column(
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(16.dp)
+                ) {
+                    if (dreams.isNotEmpty()) {
+                        BarChart(
+                            moodData = aggregateMoodData(dreams, days = 30),
                             barColor = MaterialTheme.colorScheme.primary,
                             textColor = MaterialTheme.colorScheme.onBackground
                         )
@@ -240,7 +276,7 @@ fun aggregateMoodsByDate(dreams: List<Dream>): Map<String, Map<String, Float>> {
 
 
 @Composable
-fun CustomBarChart(
+fun BarChart(
     moodData: Map<String, Float>,
     barColor: Color = MaterialTheme.colorScheme.primary,
     textColor: Color = MaterialTheme.colorScheme.onBackground,
@@ -257,7 +293,7 @@ fun CustomBarChart(
     }
 
     val maxScore = moodData.values.maxOrNull() ?: 1f
-    val barWidth = 40.dp
+//    val barWidth = 40.dp
 
     Canvas(modifier = modifier) {
         val totalBars = sortedMood.size
