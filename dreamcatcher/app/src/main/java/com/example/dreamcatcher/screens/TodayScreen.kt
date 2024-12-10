@@ -1,5 +1,6 @@
 package com.example.dreamcatcher.screens
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -127,6 +128,7 @@ open class TodayViewModel(private val dreamDao: DreamDao) : ViewModel() {
 }
 
 
+@SuppressLint("StateFlowValueCalledInComposition") //?
 @Composable
 fun TodayScreen(todayViewModel: TodayViewModel, mainViewModel: MainViewModel) {
     val spokenTextState = todayViewModel.spokenTextState

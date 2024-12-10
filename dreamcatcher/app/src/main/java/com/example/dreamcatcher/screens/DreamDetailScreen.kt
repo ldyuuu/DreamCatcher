@@ -37,6 +37,9 @@ import coil.compose.AsyncImage
 import com.example.dreamcatcher.Dream
 import com.example.dreamcatcher.MainViewModel
 import com.example.dreamcatcher.R
+import com.example.dreamcatcher.generateTestDreams
+import com.example.dreamcatcher.tools.MoodDisplayWithIcons
+import com.example.dreamcatcher.tools.formatMoodWithIcons
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -108,24 +111,13 @@ fun DreamDetailScreen(
             )
         }
 
-
 //        Button(onClick = {
-//            val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-//            val date = formatter.parse("2024-12-1") //
-//            val timestamp = date?.time ?: System.currentTimeMillis()
-//            val dream = Dream(
-//                userId = 1,
-//                content = "A dream about big carrot.",
-//                aiImageURL = "https://example.com/image.jpg",
-//                createdAt = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-//                    .parse("2024-12-01")?.time ?: System.currentTimeMillis(),
-//                mood = "Anger",
-//                title="nothing"
-//            )
-//            viewModel.addDream(dream)
+//            generateTestDreams(viewModel = viewModel, userId = userId)
 //        }) {
-//            Text("Insert Dream")
+//            Text("Insert Test Dreams")
 //        }
+
+
     }
 }
 
@@ -177,68 +169,10 @@ fun LazyDreamInfoView(
     }
 }
 
+
 fun formatTimestamp(timestamp: Long): String {
     val date = Date(timestamp)
     val format = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
     return format.format(date)
 }
-
-
-fun formatMoodWithIcons(
-    moodJson: String,
-    moodIcons: Map<String, Int>
-): List<Pair<Int, String>> {
-    return try {
-        // Parse the JSON string into a JsonArray
-        val gson = com.google.gson.Gson()
-        val jsonArray = gson.fromJson(moodJson, com.google.gson.JsonArray::class.java)
-
-        // Process each JsonObject and associate the icon with the formatted text
-        jsonArray.mapNotNull { element ->
-            val label = element.asJsonObject["label"].asString
-            val score = (element.asJsonObject["score"].asFloat * 100).toInt()
-            val iconRes = moodIcons[label]
-            iconRes?.let { it to "$label: $score%" }
-        }
-            .sortedByDescending { it.second.split(": ")[1].replace("%", "").toInt() }
-            .take(4)
-    } catch (e: Exception) {
-        emptyList()
-    }
-}
-
-
-@Composable
-fun MoodDisplayWithIcons(
-    moods: List<Pair<Int, String>>
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        moods.forEach { (iconRes, text) ->
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(horizontal = 8.dp)
-            ) {
-                // Icon
-                Image(
-                    painter = painterResource(id = iconRes),
-                    contentDescription = text,
-                    modifier = Modifier.size(36.dp)
-                )
-                // Text Label
-                Text(
-                    text = text,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-        }
-    }
-}
-
 

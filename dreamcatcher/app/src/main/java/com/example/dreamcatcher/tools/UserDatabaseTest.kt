@@ -34,6 +34,7 @@ import com.example.dreamcatcher.User
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DatabaseTest(navController: NavController, viewModel: MainViewModel) {
@@ -103,7 +104,7 @@ fun DatabaseTest(navController: NavController, viewModel: MainViewModel) {
                     viewModel.addUser(newUser)
                     userName.value = ""
                     userEmail.value = ""
-                    userAddress.value =""
+                    userAddress.value = ""
                 }
             },
             modifier = Modifier.fillMaxWidth()
@@ -151,13 +152,13 @@ fun DatabaseTest(navController: NavController, viewModel: MainViewModel) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
 
-                        Column(modifier = Modifier.fillMaxWidth(0.8f)) {
-                            Text(text = "Content: ${dream.content.take(50)}...") // Shorten content
-                            Text(text = "Mood: ${dream.mood}")
-                            Text(text = "URL: ${dream.aiImageURL}")
-                            val formattedDate = formatTimestamp(dream.createdAt)
-                            Text(text = "Created At: $formattedDate")
-                        }
+                    Column(modifier = Modifier.fillMaxWidth(0.8f)) {
+                        Text(text = "Content: ${dream.content.take(50)}...") // Shorten content
+                        Text(text = "Mood: ${dream.mood}")
+                        Text(text = "URL: ${dream.aiImageURL}")
+                        val formattedDate = formatTimestamp(dream.createdAt)
+                        Text(text = "Created At: $formattedDate")
+                    }
 
 
                     Button(onClick = { viewModel.removeDream(dream) }) {
@@ -168,6 +169,7 @@ fun DatabaseTest(navController: NavController, viewModel: MainViewModel) {
         }
     }
 }
+
 fun formatTimestamp(timestamp: Long): String {
     val date = Date(timestamp)
     val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()) // 格式化为日期时间

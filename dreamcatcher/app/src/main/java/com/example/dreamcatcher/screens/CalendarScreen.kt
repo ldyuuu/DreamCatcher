@@ -9,50 +9,45 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-
-
-
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Button
 import java.util.Calendar
-import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
-
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.text.style.TextAlign
-
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import coil.compose.AsyncImage
 import com.example.dreamcatcher.Dream
 import com.example.dreamcatcher.MainViewModel
 import org.json.JSONArray
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-fun parseMood(jsonString: String): String {
-    return try {
-        val jsonArray = JSONArray(jsonString)
-        val mood = jsonArray.getJSONObject(0) // Assuming the first mood is the most significant
-        mood.getString("label")
-    } catch (e: Exception) {
-        "Unknown"
+
+
+fun parseMood(dreams: List<Dream>): String {
+    if (dreams.isEmpty()) return "No Data"
+
+    val moodScores = mutableMapOf<String, Float>()
+    dreams.forEach { dream ->
+        try {
+            val jsonArray = JSONArray(dream.mood)
+            for (i in 0 until jsonArray.length()) {
+                val moodObject = jsonArray.getJSONObject(i)
+                val label = moodObject.getString("label")
+                val score = moodObject.getDouble("score").toFloat()
+                moodScores[label] = moodScores.getOrDefault(label, 0f) + score
+            }
+        } catch (e: Exception) {
+        }
     }
+
+    val topMood = moodScores.maxByOrNull { it.value / dreams.size }
+    return topMood?.key ?: "Unknown"
 }
+
+
 @Composable
 fun CalendarScreen(
     viewModel: MainViewModel,
@@ -200,11 +195,14 @@ fun MonthView(
                                 style = MaterialTheme.typography.bodySmall
                             )
                             if (dreams.isNotEmpty()) {
-                                val moodLabel = parseMood(dreams.firstOrNull()?.mood ?: "")
+                                val moodLabel = parseMood(dreams)
                                 Text(
                                     text = moodLabel ?: "",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.widthIn(max = 40.dp),
                                 )
                             }
                         }
