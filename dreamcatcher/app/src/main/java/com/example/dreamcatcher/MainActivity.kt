@@ -7,20 +7,18 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.*
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavHostController
@@ -36,14 +34,11 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.viewModelFactory
-import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.dreamcatcher.screens.AccountScreen
 import com.example.dreamcatcher.screens.CalendarScreen
 import com.example.dreamcatcher.screens.DisplaySettingsScreen
 import com.example.dreamcatcher.screens.DreamDetailScreen
-import com.example.dreamcatcher.screens.EditAccountScreen
 import com.example.dreamcatcher.screens.HomeScreen
 import com.example.dreamcatcher.screens.MapScreen
 
@@ -88,7 +83,8 @@ class MainActivity : ComponentActivity() {
                 MainApp(
                     viewModel = viewModel,
                     todayViewModel = todayViewModel,
-                    navController = navController
+                    navController = navController,
+                    dreamDao = dreamDao
                 )
             }
         }
@@ -146,7 +142,8 @@ class MainActivity : ComponentActivity() {
 fun MainApp(
     viewModel: MainViewModel,
     todayViewModel: TodayViewModel,
-    navController: NavHostController
+    navController: NavHostController,
+    dreamDao: DreamDao
 ) {
 
     val loggedInUser by viewModel.loggedInUser.collectAsState()
@@ -198,7 +195,8 @@ fun MainApp(
                     )
                 }
                 composable("home") {
-                    HomeScreen()
+                    val allDreams by dreamDao.getAllDreams().observeAsState(emptyList())
+                    HomeScreen(dreams = allDreams)
                 }
                 composable("today") {
                     TodayScreen(todayViewModel = todayViewModel, mainViewModel = viewModel)

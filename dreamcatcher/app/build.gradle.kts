@@ -20,18 +20,18 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables {useSupportLibrary = true}
+        vectorDrawables { useSupportLibrary = true }
 
-        val localProperties = gradleLocalProperties(rootDir,providers)
+        val localProperties = gradleLocalProperties(rootDir, providers)
         val huggingFaceApiKey = localProperties.getProperty("HUGGINGFACE_API_KEY", "")
         val openAiApiKey = localProperties.getProperty("OPENAI_API_KEY", "")
-        val googleMapApiKey = localProperties.getProperty("GOOGLE_MAP_API_KEY","")
+        val googleMapApiKey = localProperties.getProperty("GOOGLE_MAP_API_KEY", "")
 
         manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = googleMapApiKey
 
         buildConfigField("String", "HUGGINGFACE_API_KEY", "\"$huggingFaceApiKey\"")
         buildConfigField("String", "OPENAI_API_KEY", "\"$openAiApiKey\"")
-        buildConfigField("String","GOOGLE_MAP_API_KEY","\"$googleMapApiKey\"")
+        buildConfigField("String", "GOOGLE_MAP_API_KEY", "\"$googleMapApiKey\"")
     }
 
     buildTypes {
@@ -76,7 +76,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-    implementation (libs.androidx.runtime.livedata)
+    implementation(libs.androidx.runtime.livedata)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.play.services.maps)
@@ -91,9 +91,9 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation("com.google.android.gms:play-services-auth:20.7.0")
-    implementation ("com.squareup.okhttp3:okhttp:4.11.0")
-    implementation ("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
     implementation("io.coil-kt:coil-compose:2.4.0")
@@ -107,5 +107,9 @@ dependencies {
     implementation("com.google.android.gms:play-services-maps:18.1.0")
     implementation("com.google.maps.android:maps-compose:2.15.0")
 
-    implementation ("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+//    implementation ("com.github.BlackSparkDev:compose-charts:1.0.0")
+
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 }
+
