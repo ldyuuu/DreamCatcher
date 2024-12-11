@@ -70,6 +70,10 @@ class Repository(private val userDao: UserDao, private val dreamDao: DreamDao) {
         return userDao.getUserByEmail(email)
     }
 
+    fun getDreamsByUserId(userId: Int): LiveData<List<Dream>> {
+        return dreamDao.getDreamsByUserId(userId)
+    }
+
     fun getUserByEmail(email: String): User? {
         return runBlocking {
             userDao.getUserByEmail(email)

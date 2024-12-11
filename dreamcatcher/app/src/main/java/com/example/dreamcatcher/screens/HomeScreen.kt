@@ -1,6 +1,5 @@
 package com.example.dreamcatcher.screens
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -35,24 +34,24 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.max
-import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import com.example.dreamcatcher.MainViewModel
 import com.example.dreamcatcher.tools.BarChart
 import com.example.dreamcatcher.tools.MoodStatusCard
 import com.example.dreamcatcher.tools.PieChart
-import com.example.dreamcatcher.tools.aggregateMoodData
 import com.example.dreamcatcher.tools.getTopMoodForToday
-
 
 val moodColors = mapOf(
     "joy" to Color(0xFFF2D923), // Yellow
@@ -64,15 +63,16 @@ val moodColors = mapOf(
     "fear" to Color(0xFF673AB7) // Purple
 )
 
-
 @Composable
-fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
-    val cardModifier = Modifier
-        .width(330.dp)
-        .height(200.dp)
-
-    val dreams by viewModel.dreams.collectAsState()
+fun HomeScreen(viewModel: MainViewModel, navController: NavHostController) {
+    // Observing dreams for the logged-in user
+    val dreams = viewModel.getDreamsForLoggedInUser().observeAsState(emptyList()).value
     val topMood = getTopMoodForToday(dreams)
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val cardModifier = Modifier
+        .width(screenWidth * 0.8f)
+        .height(220.dp)
+        .padding(8.dp)
     val allMoods = if (topMood != null) {
         aggregateMoodData(dreams.filter { dream ->
             val dreamDate =
@@ -84,7 +84,6 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
             dreamDate == currentDate
         })
     } else null
-
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -94,20 +93,7 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
         val sevenDayMood = aggregateMoodData(dreams, days = 7)
         val fourteenDayMood = aggregateMoodData(dreams, days = 14)
         val thirtyDayMood = aggregateMoodData(dreams, days = 30)
-
-        Log.d("HomeScreen", "7-Day Mood: $sevenDayMood")
-        Log.d("HomeScreen", "30-Day Mood: $thirtyDayMood")
-        Log.d("HomeScreen", "Dreams: $dreams")
-
         // Top Section
-        item {
-            Text(
-                text = "In Focus",
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-        }
-
         item {
             LazyRow(
                 modifier = Modifier
@@ -116,20 +102,49 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
                 contentPadding = PaddingValues(horizontal = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                item {
-                    InfoCard(
-                        topMood = topMood,
-                        modifier = cardModifier,
-                        allMoods = allMoods
-                    )
-                }
+                items(5) { index ->
+                    when (index) {
+                        1 -> InfoCardWithLink(
+                            title = "Enter Today's Dream",
+                            description = "Log your dream for today",
+                            navController = navController,
+                            destination = "today",
+                            backgroundResId = R.drawable.today_card_background
+                        )
+                        2 -> InfoCardWithLink(
+                            title = "View Dream Calendar",
+                            description = "Check your dream logs",
+                            navController = navController,
+                            destination = "calendar",
+                            backgroundResId = R.drawable.calendar_card_background
+                        )
+//                        2 -> InfoCardWithLink(
+//                            title = "Settings",
+//                            description = "Adjust your preferences",
+//                            navController = navController,
+//                            destination = "settings",
+//                            backgroundResId = R.drawable.settings_card_background
+//                        )
+                        3 ->InfoCardWithLink(
+                                title = "Find Nearby Therapists",
+                                description = "Locate therapists near your location",
+                                navController = navController,
+                                destination = "map",
+                                backgroundResId = R.drawable.map_card_background
+                            )
+                        0-> InfoCard(
+                            topMood = topMood,
+                            modifier = cardModifier,
+                            allMoods = allMoods
+                        )
+                        4-> MoodStatusCard(
+                            moods = fourteenDayMood,
+                            modifier = cardModifier,
+                            onTherapyClick = { /*TODO*/ },
+                        )
 
-                item {
-                    MoodStatusCard(
-                        moods = fourteenDayMood,
-                        modifier = cardModifier,
-                        onClick = { },
-                    )
+
+                    }
                 }
             }
         }
@@ -151,7 +166,6 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
                 modifier = Modifier.padding(bottom = 8.dp)
             )
         }
-
         item {
             Card(
                 modifier = Modifier
@@ -222,6 +236,8 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
 
     }
 }
+
+
 
 
 @Composable
@@ -305,3 +321,107 @@ fun InfoCard(
 
 
 
+fun parseMoodJson(moodJson: String): List<Pair<String, Float>> {
+    return try {
+        val gson = Gson()
+        val jsonArray = gson.fromJson(moodJson, List::class.java) as List<Map<String, Any>>
+        jsonArray.map {
+            val label = it["label"] as String
+            val score = (it["score"] as Double).toFloat()
+            label to score
+        }
+    } catch (e: Exception) {
+        emptyList()
+    }
+}
+
+
+fun aggregateMoodData(dreams: List<Dream>, days: Int? = null): Map<String, Float> {
+    val filteredDreams = if (days != null) {
+        val cutoffTime = System.currentTimeMillis() - days * 24 * 60 * 60 * 1000L
+        dreams.filter { it.createdAt >= cutoffTime }
+    } else {
+        dreams
+    }
+
+
+    val moodScores = mutableMapOf<String, MutableList<Float>>()
+
+    filteredDreams.forEach { dream ->
+        val moods = parseMoodJson(dream.mood)
+        moods.forEach { (label, score) ->
+            moodScores.computeIfAbsent(label) { mutableListOf() }.add(score)
+        }
+    }
+
+    return moodScores.mapValues { (_, scores) -> scores.average().toFloat() }
+}
+
+
+@Composable
+fun InfoCardWithLink(
+    title: String,
+    description: String,
+    navController: NavHostController,
+    destination: String,
+    backgroundResId: Int
+) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val cardWidth = screenWidth * 0.8f
+
+    Card(
+        modifier = Modifier
+            .width(cardWidth)
+            .height(220.dp)
+            .padding(8.dp),
+        elevation = CardDefaults.elevatedCardElevation(8.dp),
+        onClick = { navController.navigate(destination) }
+    ) {
+        Box {
+            Image(
+                painter = painterResource(id = backgroundResId),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        shadow = Shadow(
+                            color = Color.Black,
+                            offset = Offset(2f, 2f),
+                            blurRadius = 4f
+                        )
+                    )
+                )
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        color = Color.White,
+                        shadow = Shadow(
+                            color = Color.Black,
+                            offset = Offset(2f, 2f),
+                            blurRadius = 4f
+                        )
+                    )
+                )
+            }
+        }
+    }
+}
+
+
+@Preview(showBackground = true)
+@Composable
+fun HomeScreenPreview() {
+
+}

@@ -162,6 +162,10 @@ open class MainViewModel(application: Application,private val dataStoreManger: D
         return repository.getUserByEmailSync(email)
     }
 
+    fun getDreamsForLoggedInUser(): LiveData<List<Dream>> {
+        val userId = loggedInUser.value?.userId ?: return MutableLiveData(emptyList())
+        return repository.getDreamsByUserId(userId)
+    }
 
     private suspend fun geocodeAddress(address: String, apiKey: String): Location? {
         val response = RetrofitInstance.geocodingAPI.geocode(address, apiKey)

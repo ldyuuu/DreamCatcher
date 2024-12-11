@@ -39,7 +39,10 @@ interface DreamDao {
     @Delete
     suspend fun deleteDream(dream: Dream)
 
+
+    @Query("SELECT * FROM dreams WHERE userId = :userId")
+    fun getDreamsByUserId(userId: Int): LiveData<List<Dream>>
+
     @Query("SELECT * FROM users WHERE userId = :userId")
     suspend fun getUserById(userId: Int): User?
-
 }
