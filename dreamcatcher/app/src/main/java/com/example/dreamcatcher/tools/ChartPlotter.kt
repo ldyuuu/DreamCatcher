@@ -84,6 +84,9 @@ fun PieChart(
         if (moodData.isEmpty()) return@Canvas
         val total = moodData.values.sum()
 
+        val diameter = minOf(size.width, size.height)
+        val chartSize = Size(diameter, diameter)
+        val center = Offset(size.width / 2f, size.height / 2f)
         var startAngle = 0f
 
         moodData.forEach { (label, value) ->
@@ -95,7 +98,11 @@ fun PieChart(
                 startAngle = startAngle,
                 sweepAngle = sweepAngle,
                 useCenter = true,
-                size = Size(size.width, size.height)
+                topLeft = Offset(
+                    (size.width - diameter) / 2f,
+                    (size.height - diameter) / 2f
+                ),
+                size = chartSize
             )
             startAngle += sweepAngle
         }
