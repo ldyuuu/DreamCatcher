@@ -5,8 +5,8 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.dreamcatcher.models.TherapyCenter
 import com.example.dreamcatcher.network.RetrofitInstance
 import com.google.firebase.auth.FirebaseUser
@@ -14,13 +14,45 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-open class MainViewModel(application: Application,private val dataStoreManger: DataStoreManager) : ViewModel() {
+open class MainViewModel(application: Application,private val dataStoreManager: DataStoreManager) : ViewModel() {
     private val repository: Repository
     open val allUsers: LiveData<List<User>>
     val allDreams: LiveData<List<Dream>>
     val searchUserResults: LiveData<User?>
     val searchDreamResults: LiveData<List<Dream>>
     val userAddress = MutableLiveData<String?>()
+
+    private val _settings = MutableLiveData(
+        mapOf(
+            "Show Today's Dream" to true,
+            "Show Log Dream" to true,
+            "Show Dream Calendar" to true,
+            "Show Nearby Therapists" to true,
+            "Show Trend Analysis" to true
+        )
+    )
+    val settings: LiveData<Map<String, Boolean>> get() = _settings
+
+    fun updateSetting(key: String, value: Boolean) {
+        val updatedSettings = _settings.value?.toMutableMap()?.apply {
+            put(key, value)
+        } ?: mapOf(key to value)
+        _settings.value = updatedSettings
+
+        // Save updated settings to DataStore
+        viewModelScope.launch {
+            dataStoreManager.saveHomeScreenSettings(updatedSettings)
+        }
+    }
+
+    private fun saveSettings(settings: Map<String, Boolean>) {
+        viewModelScope.launch {
+            dataStoreManager.saveHomeScreenSettings(settings)
+        }
+    }
+
+    private val _dreams = MutableStateFlow<List<Dream>>(emptyList())
+    val dreams: StateFlow<List<Dream>> get() = _dreams
 
     private val _firebaseUser = MutableStateFlow<FirebaseUser?>(null)
     val firebaseUser: StateFlow<FirebaseUser?> get() = _firebaseUser
@@ -30,6 +62,10 @@ open class MainViewModel(application: Application,private val dataStoreManger: D
 
     private val _loggedInUser = MutableStateFlow<User?>(null)
     val loggedInUser: StateFlow<User?> get() = _loggedInUser
+
+    fun updateDreams(dreams: List<Dream>) {
+        _dreams.value = dreams
+    }
 
     fun updateFirebaseUser(user: FirebaseUser?) {
         _firebaseUser.value = user
@@ -43,7 +79,7 @@ open class MainViewModel(application: Application,private val dataStoreManger: D
         val dreamDao = database.dreamDao()
 
         viewModelScope.launch {
-            dataStoreManger.isDarkModeEnabled.collect{
+            dataStoreManager.isDarkModeEnabled.collect{
                 isEnabled -> _isDarkModeEnabled.value = isEnabled
             }
         }
@@ -54,11 +90,27 @@ open class MainViewModel(application: Application,private val dataStoreManger: D
         allDreams = repository.allDreams
         searchUserResults = repository.searchUserResults
         searchDreamResults = repository.searchDreamResults
+
+        viewModelScope.launch {
+            allDreams.asFlow().collect { dreamList ->
+                Log.d("MainViewModel", "Updated Dreams: $dreamList")
+                _dreams.value = dreamList
+            }
+        }
+
+        viewModelScope.launch {
+            dataStoreManager.homeScreenSettings.collect { savedSettings ->
+                _settings.value = savedSettings
+            }
+        }
     }
+
+
+
 
     fun setDarkModeEnabled(enabled: Boolean) {
         viewModelScope.launch {
-            dataStoreManger.setDarkModeEnabled(enabled)
+            dataStoreManager.setDarkModeEnabled(enabled)
         }
     }
 

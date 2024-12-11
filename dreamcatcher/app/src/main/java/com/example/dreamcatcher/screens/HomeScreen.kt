@@ -37,6 +37,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -64,7 +65,11 @@ val moodColors = mapOf(
 )
 
 @Composable
-fun HomeScreen(viewModel: MainViewModel, navController: NavHostController) {
+fun HomeScreen(
+    viewModel: MainViewModel,
+    navController: NavHostController,
+    settings: Map<String, Boolean>
+) {
     // Observing dreams for the logged-in user
     val dreams = viewModel.getDreamsForLoggedInUser().observeAsState(emptyList()).value
     val topMood = getTopMoodForToday(dreams)
@@ -93,6 +98,14 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavHostController) {
         val sevenDayMood = aggregateMoodData(dreams, days = 7)
         val fourteenDayMood = aggregateMoodData(dreams, days = 14)
         val thirtyDayMood = aggregateMoodData(dreams, days = 30)
+
+        val settingKeys = listOf(
+            "Show Today's Dream",
+            "Show Log Dream",
+            "Show Dream Calendar",
+            "Show Nearby Therapists",
+            "Show Trend Analysis"
+        )
         // Top Section
         item {
             LazyRow(
@@ -102,22 +115,31 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavHostController) {
                 contentPadding = PaddingValues(horizontal = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(5) { index ->
-                    when (index) {
-                        1 -> InfoCardWithLink(
-                            title = "Enter Today's Dream",
-                            description = "Log your dream for today",
-                            navController = navController,
-                            destination = "today",
-                            backgroundResId = R.drawable.today_card_background
-                        )
-                        2 -> InfoCardWithLink(
-                            title = "View Dream Calendar",
-                            description = "Check your dream logs",
-                            navController = navController,
-                            destination = "calendar",
-                            backgroundResId = R.drawable.calendar_card_background
-                        )
+                items(settingKeys) { key ->
+                    val shown = settings[key] ?: false
+                    if (shown) {
+                        when (key) {
+                            "Show Today's Dream" -> InfoCard(
+                                topMood = topMood,
+                                modifier = cardModifier,
+                                allMoods = allMoods
+                            )
+
+                            "Show Log Dream" -> InfoCardWithLink(
+                                title = "Enter Today's Dream",
+                                description = "Log your dream for today",
+                                navController = navController,
+                                destination = "today",
+                                backgroundResId = R.drawable.today_card_background
+                            )
+
+                            "Show Dream Calendar" -> InfoCardWithLink(
+                                title = "View Dream Calendar",
+                                description = "Check your dream logs",
+                                navController = navController,
+                                destination = "calendar",
+                                backgroundResId = R.drawable.calendar_card_background
+                            )
 //                        2 -> InfoCardWithLink(
 //                            title = "Settings",
 //                            description = "Adjust your preferences",
@@ -125,25 +147,20 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavHostController) {
 //                            destination = "settings",
 //                            backgroundResId = R.drawable.settings_card_background
 //                        )
-                        3 ->InfoCardWithLink(
+                            "Show Nearby Therapists" -> InfoCardWithLink(
                                 title = "Find Nearby Therapists",
                                 description = "Locate therapists near your location",
                                 navController = navController,
                                 destination = "map",
                                 backgroundResId = R.drawable.map_card_background
                             )
-                        0-> InfoCard(
-                            topMood = topMood,
-                            modifier = cardModifier,
-                            allMoods = allMoods
-                        )
-                        4-> MoodStatusCard(
-                            moods = fourteenDayMood,
-                            modifier = cardModifier,
-                            onTherapyClick = { /*TODO*/ },
-                        )
 
+                            "Show Trend Analysis" -> MoodStatusCard(
+                                moods = fourteenDayMood,
+                                modifier = cardModifier
+                            )
 
+                        }
                     }
                 }
             }
@@ -238,8 +255,6 @@ fun HomeScreen(viewModel: MainViewModel, navController: NavHostController) {
 }
 
 
-
-
 @Composable
 fun InfoCard(
     topMood: Pair<String, Float>?,
@@ -319,7 +334,6 @@ fun InfoCard(
         }
     }
 }
-
 
 
 fun parseMoodJson(moodJson: String): List<Pair<String, Float>> {
