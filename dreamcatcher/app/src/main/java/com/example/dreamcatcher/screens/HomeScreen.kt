@@ -45,21 +45,54 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavHostController
 import com.example.dreamcatcher.MainViewModel
+import com.example.dreamcatcher.tools.BarChart
+import com.example.dreamcatcher.tools.MoodStatusCard
+import com.example.dreamcatcher.tools.PieChart
+import com.example.dreamcatcher.tools.getTopMoodForToday
 
+val moodColors = mapOf(
+    "joy" to Color(0xFFF2D923), // Yellow
+    "sadness" to Color(0xFF2196F3), // Blue
+    "anger" to Color(0xFFF44336), // Red
+    "neutral" to Color(0xFF7BF73E), // Green
+    "surprise" to Color(0xFFFF9800), // Orange
+    "disgust" to Color(0xFFED7F4A), // Dark red
+    "fear" to Color(0xFF673AB7) // Purple
+)
 
 @Composable
-fun HomeScreen(viewModel: MainViewModel,navController: NavHostController) {
+fun HomeScreen(viewModel: MainViewModel, navController: NavHostController) {
     // Observing dreams for the logged-in user
     val dreams = viewModel.getDreamsForLoggedInUser().observeAsState(emptyList()).value
-
+    val topMood = getTopMoodForToday(dreams)
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val cardModifier = Modifier
+        .width(screenWidth * 0.8f)
+        .height(220.dp)
+        .padding(8.dp)
+    val allMoods = if (topMood != null) {
+        aggregateMoodData(dreams.filter { dream ->
+            val dreamDate =
+                SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(dream.createdAt)
+            val currentDate = SimpleDateFormat(
+                "yyyy-MM-dd",
+                Locale.getDefault()
+            ).format(System.currentTimeMillis())
+            dreamDate == currentDate
+        })
+    } else null
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        val sevenDayMood = aggregateMoodData(dreams, days = 7)
+        val fourteenDayMood = aggregateMoodData(dreams, days = 14)
+        val thirtyDayMood = aggregateMoodData(dreams, days = 30)
         // Top Section
         item {
             LazyRow(
@@ -71,14 +104,14 @@ fun HomeScreen(viewModel: MainViewModel,navController: NavHostController) {
             ) {
                 items(5) { index ->
                     when (index) {
-                        0 -> InfoCardWithLink(
+                        1 -> InfoCardWithLink(
                             title = "Enter Today's Dream",
                             description = "Log your dream for today",
                             navController = navController,
                             destination = "today",
                             backgroundResId = R.drawable.today_card_background
                         )
-                        1 -> InfoCardWithLink(
+                        2 -> InfoCardWithLink(
                             title = "View Dream Calendar",
                             description = "Check your dream logs",
                             navController = navController,
@@ -92,13 +125,23 @@ fun HomeScreen(viewModel: MainViewModel,navController: NavHostController) {
 //                            destination = "settings",
 //                            backgroundResId = R.drawable.settings_card_background
 //                        )
-                        2 ->InfoCardWithLink(
+                        3 ->InfoCardWithLink(
                                 title = "Find Nearby Therapists",
                                 description = "Locate therapists near your location",
                                 navController = navController,
                                 destination = "map",
                                 backgroundResId = R.drawable.map_card_background
                             )
+                        0-> InfoCard(
+                            topMood = topMood,
+                            modifier = cardModifier,
+                            allMoods = allMoods
+                        )
+                        4-> MoodStatusCard(
+                            moods = fourteenDayMood,
+                            modifier = cardModifier,
+                            onTherapyClick = { /*TODO*/ },
+                        )
 
 
                     }
@@ -123,7 +166,6 @@ fun HomeScreen(viewModel: MainViewModel,navController: NavHostController) {
                 modifier = Modifier.padding(bottom = 8.dp)
             )
         }
-
         item {
             Card(
                 modifier = Modifier
@@ -139,7 +181,7 @@ fun HomeScreen(viewModel: MainViewModel,navController: NavHostController) {
                 ) {
                     if (dreams.isNotEmpty()) {
                         BarChart(
-                            moodData = aggregateMoodData(dreams, days = 7),
+                            moodData = sevenDayMood,
                             barColor = MaterialTheme.colorScheme.primary,
                             textColor = MaterialTheme.colorScheme.onBackground
                         )
@@ -177,7 +219,7 @@ fun HomeScreen(viewModel: MainViewModel,navController: NavHostController) {
                 ) {
                     if (dreams.isNotEmpty()) {
                         BarChart(
-                            moodData = aggregateMoodData(dreams, days = 30),
+                            moodData = thirtyDayMood,
                             barColor = MaterialTheme.colorScheme.primary,
                             textColor = MaterialTheme.colorScheme.onBackground
                         )
@@ -191,39 +233,93 @@ fun HomeScreen(viewModel: MainViewModel,navController: NavHostController) {
                 }
             }
         }
+
     }
 }
+
 
 
 
 @Composable
-fun InfoCard(title: String, description: String, cardWithFraction: Float = 1f) {
+fun InfoCard(
+    topMood: Pair<String, Float>?,
+    modifier: Modifier = Modifier,
+    allMoods: Map<String, Float>?,
+    cardWithFraction: Float = 0.85f
+) {
     val screenWith = LocalConfiguration.current.screenWidthDp.dp
     val cardWidth = screenWith * cardWithFraction
 
     Card(
-        modifier = Modifier
-            .width(cardWidth)
-            .height(220.dp),
+        modifier = modifier,
         elevation = CardDefaults.elevatedCardElevation(8.dp),
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+                .fillMaxWidth()
+                .padding(16.dp)
         ) {
+            // Title at the Top-Left
             Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                text = "Today's Mood",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier
+                    .align(Alignment.Start)
+                    .padding(bottom = 16.dp)
             )
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodyMedium
-            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Pie Chart on the Left
+                if (allMoods != null) {
+                    PieChart(
+                        moodData = allMoods,
+                        modifier = Modifier
+                            .weight(1f)
+                            .size(130.dp)
+                            .padding(end = 16.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(20.dp))
+
+                // Icon and Mood Info on the Right
+                Column(
+                    horizontalAlignment = Alignment.Start,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    if (topMood != null) {
+                        Icon(
+                            painter = painterResource(
+                                id = moodIcons[topMood.first] ?: R.drawable.neutral
+                            ),
+                            contentDescription = topMood.first,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .padding(bottom = 8.dp),
+                            tint = Color.Unspecified
+                        )
+                        Text(
+                            text = "${topMood.first.capitalize()}: ${"%.1f".format(topMood.second * 100)}%",
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    } else {
+                        Text(
+                            text = "Log your daily dream",
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
         }
     }
 }
+
+
 
 fun parseMoodJson(moodJson: String): List<Pair<String, Float>> {
     return try {
@@ -261,102 +357,6 @@ fun aggregateMoodData(dreams: List<Dream>, days: Int? = null): Map<String, Float
     return moodScores.mapValues { (_, scores) -> scores.average().toFloat() }
 }
 
-
-@Composable
-fun AggregatedMoodDisplay(moodData: Map<String, Float>) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        moodData.forEach { (mood, averageScore) ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    painter = painterResource(id = moodIcons[mood] ?: R.drawable.neutral),
-                    contentDescription = mood,
-                    modifier = Modifier.size(32.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    "$mood: ${"%.1f".format(averageScore * 100)}%",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-        }
-    }
-}
-
-fun aggregateMoodsByDate(dreams: List<Dream>): Map<String, Map<String, Float>> {
-    val dateGroupedData = dreams.groupBy { dream ->
-        SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(dream.createdAt)
-    }
-
-    return dateGroupedData.mapValues { (_, dreamsOnDate) ->
-        aggregateMoodData(dreamsOnDate)
-    }
-}
-
-
-@Composable
-fun BarChart(
-    moodData: Map<String, Float>,
-    barColor: Color = MaterialTheme.colorScheme.primary,
-    textColor: Color = MaterialTheme.colorScheme.onBackground,
-    modifier: Modifier = Modifier
-        .fillMaxWidth()
-        .height(300.dp)
-        .padding(16.dp)
-) {
-    val moodHierarchy = listOf(
-        "joy", "surprise", "neutral", "sadness", "anger", "disgust", "fear"
-    )
-    val sortedMood = moodHierarchy.mapNotNull { mood ->
-        moodData[mood]?.let { mood to it }
-    }
-
-    val maxScore = moodData.values.maxOrNull() ?: 1f
-//    val barWidth = 40.dp
-
-    Canvas(modifier = modifier) {
-        val totalBars = sortedMood.size
-        val barSpacingRatio = 0.2f // Space as a fraction of bar width
-        val barWidth = size.width / (totalBars + (totalBars - 1) * barSpacingRatio)
-        val barSpacing = barWidth * barSpacingRatio
-
-        sortedMood.forEachIndexed { index, (label, score) ->
-            val barHeight = (score / maxScore) * size.height
-            val xOffset = index * (barWidth + barSpacing)
-
-            // Draw Bar
-            drawRect(
-                color = barColor,
-                topLeft = Offset(x = xOffset, y = size.height - barHeight),
-                size = Size(width = barWidth, height = barHeight)
-            )
-
-            // Draw Label
-            drawContext.canvas.nativeCanvas.apply {
-                drawText(
-                    label,
-                    xOffset + barWidth / 2,
-                    size.height + 16.dp.toPx(),
-                    android.graphics.Paint().apply {
-                        textAlign = android.graphics.Paint.Align.CENTER
-                        textSize = 12.dp.toPx()
-                        color = textColor.toArgb()
-                    }
-                )
-            }
-        }
-    }
-}
 
 @Composable
 fun InfoCardWithLink(
@@ -398,7 +398,7 @@ fun InfoCardWithLink(
                         color = Color.White,
                         shadow = Shadow(
                             color = Color.Black,
-                            offset = Offset(2f, 2f), // Shadow offset
+                            offset = Offset(2f, 2f),
                             blurRadius = 4f
                         )
                     )
