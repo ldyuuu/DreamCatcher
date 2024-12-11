@@ -196,7 +196,7 @@ fun MainApp(
                 }
                 composable("home") {
                     val allDreams by dreamDao.getAllDreams().observeAsState(emptyList())
-                    HomeScreen(dreams = allDreams)
+                    HomeScreen(viewModel = viewModel)
                 }
                 composable("today") {
                     TodayScreen(todayViewModel = todayViewModel, mainViewModel = viewModel)

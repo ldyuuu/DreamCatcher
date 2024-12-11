@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.dreamcatcher.models.TherapyCenter
@@ -22,6 +23,9 @@ open class MainViewModel(application: Application,private val dataStoreManger: D
     val searchDreamResults: LiveData<List<Dream>>
     val userAddress = MutableLiveData<String?>()
 
+    private val _dreams = MutableStateFlow<List<Dream>>(emptyList())
+    val dreams: StateFlow<List<Dream>> get() = _dreams
+
     private val _firebaseUser = MutableStateFlow<FirebaseUser?>(null)
     val firebaseUser: StateFlow<FirebaseUser?> get() = _firebaseUser
 
@@ -30,6 +34,10 @@ open class MainViewModel(application: Application,private val dataStoreManger: D
 
     private val _loggedInUser = MutableStateFlow<User?>(null)
     val loggedInUser: StateFlow<User?> get() = _loggedInUser
+
+    fun updateDreams(dreams: List<Dream>) {
+        _dreams.value = dreams
+    }
 
     fun updateFirebaseUser(user: FirebaseUser?) {
         _firebaseUser.value = user
@@ -54,6 +62,13 @@ open class MainViewModel(application: Application,private val dataStoreManger: D
         allDreams = repository.allDreams
         searchUserResults = repository.searchUserResults
         searchDreamResults = repository.searchDreamResults
+
+        viewModelScope.launch {
+            allDreams.asFlow().collect {dreamList ->
+                Log.d("MainViewModel", "Updated Dreams: $dreamList")
+                _dreams.value = dreamList
+            }
+        }
     }
 
     fun setDarkModeEnabled(enabled: Boolean) {
