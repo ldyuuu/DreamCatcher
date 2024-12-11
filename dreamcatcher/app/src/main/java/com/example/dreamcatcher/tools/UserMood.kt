@@ -201,17 +201,16 @@ fun evaluateMood(moods: Map<String, Float>): Pair<String,Boolean>{
         0f
     }
 
-    return if (negativePercentage > 70f){
-        "We find your mood is low recently, would you like to talk to someone?" to false
+    return if (negativePercentage > 60f){
+        "Based on your mood trends over the last 14 days, it seems like you've been feeling low. It might help to talk to a mental health professional for support. Would you like assistance in finding one?" to false
     }else{
-        "You are doing great! Keep it up!" to true
+        "Great job! Over the past 14 days, your mood has been positive. Keep up the good energy!" to true
     }
 }
 
 @Composable
 fun MoodStatusCard(
     moods: Map<String, Float>,
-    onTherapyClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Log.d("MoodStatusCard", "Mood: $moods")
@@ -240,14 +239,6 @@ fun MoodStatusCard(
                 )
             }
 
-            if (!isPositive) {
-                Button(
-                    onClick = onTherapyClick,
-                    modifier = Modifier.padding(start = 16.dp)
-                ) {
-                    Text(text = "Find a Therapist")
-                }
-            }
         }
     }
 }
@@ -268,6 +259,5 @@ fun MoodStatusCardPreview() {
 
     MoodStatusCard(
         moods = sampleMoods,
-        onTherapyClick = { Log.d("MoodStatusCard", "Therapy button clicked!") }
     )
 }

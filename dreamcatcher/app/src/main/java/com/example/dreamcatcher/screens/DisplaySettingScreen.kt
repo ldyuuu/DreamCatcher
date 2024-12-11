@@ -22,13 +22,15 @@ import com.example.dreamcatcher.R
 fun DisplaySettingsScreen(
     isDarkModeEnabled: Boolean,
     onDarkModeToggle: (Boolean) -> Unit,
-    onCustomizeHomePage: () -> Unit,
+    settings: Map<String, Boolean>,
+    onToggleChange: (String, Boolean) -> Unit,
     onBack: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -84,27 +86,25 @@ fun DisplaySettingsScreen(
 
         Log.d("MainApp", "Dark mode is enabled: $isDarkModeEnabled")
 
-        // Customize Home Page Button
-        Button(
-            onClick = { onCustomizeHomePage() },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-        ) {
-            Text(text = "Customize Home Page")
+        settings.forEach { (key, value) ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = key, style = MaterialTheme.typography.bodyLarge)
+                Switch(
+                    checked = value,
+                    onCheckedChange = { isChecked ->
+                        Log.d("SettingsScreen", "Toggled $key to $isChecked")
+                        onToggleChange(key, isChecked)
+                    }
+                )
+            }
         }
 
     }
 }
 
-//
-//@Preview(showBackground = true)
-//@Composable
-//fun DisplaySettingsScreenPreview() {
-//    DisplaySettingsScreen(
-//        isDarkModeEnabled = false,
-//        onDarkModeToggle = {},
-//        onCustomizeHomePage = {},
-//        onBack = {}
-//    )
-//}

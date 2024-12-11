@@ -195,7 +195,16 @@ fun MainApp(
                     )
                 }
                 composable("home") {
-                    HomeScreen(viewModel = viewModel,navController = navController)
+                    val settings = viewModel.settings.observeAsState(
+                        mapOf(
+                            "Show Today's Dream" to true,
+                            "Show Log Dream" to true,
+                            "Show Dream Calendar" to true,
+                            "Show Nearby Therapists" to true,
+                            "Show Trend Analysis" to true
+                        )
+                    ).value
+                    HomeScreen(viewModel = viewModel,navController = navController, settings = settings)
                 }
                 composable("today") {
                     TodayScreen(todayViewModel = todayViewModel, mainViewModel = viewModel)
@@ -241,29 +250,22 @@ fun MainApp(
 
                     DatabaseTest(navController = navController, viewModel = mainViewModel)
                 }
+
                 composable("display_settings") {
                     DisplaySettingsScreen(
                         isDarkModeEnabled = isDarkModeEnabled,
                         onDarkModeToggle = { viewModel.setDarkModeEnabled(it) },
-                        onCustomizeHomePage = { navController.navigate("customize_home_page") },
+                        settings = viewModel.settings.observeAsState(emptyMap()).value,
+                        onToggleChange = { key, value -> viewModel.updateSetting(key, value) },
                         onBack = { navController.popBackStack() }
                     )
                 }
+
                 composable("account_screen") {
                     AccountScreen(
                         viewModel = viewModel,
                         onBack={  navController.popBackStack() }
                         //onLogout = { currentScreen = "Login" }
-                    )
-                }
-
-
-                composable("display_settings") {
-                    DisplaySettingsScreen(
-                        isDarkModeEnabled = isDarkModeEnabled,
-                        onDarkModeToggle = { viewModel.setDarkModeEnabled(it) },
-                        onCustomizeHomePage = { navController.navigate("customize_home_page") },
-                        onBack = { navController.popBackStack() }
                     )
                 }
 
