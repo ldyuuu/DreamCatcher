@@ -45,6 +45,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.max
+import androidx.navigation.NavController
 import com.example.dreamcatcher.MainViewModel
 import com.example.dreamcatcher.tools.BarChart
 import com.example.dreamcatcher.tools.MoodStatusCard
@@ -65,7 +66,7 @@ val moodColors = mapOf(
 
 
 @Composable
-fun HomeScreen(viewModel: MainViewModel) {
+fun HomeScreen(viewModel: MainViewModel, navController: NavController) {
     val cardModifier = Modifier
         .width(330.dp)
         .height(200.dp)
@@ -127,7 +128,7 @@ fun HomeScreen(viewModel: MainViewModel) {
                     MoodStatusCard(
                         moods = fourteenDayMood,
                         modifier = cardModifier,
-                        onTherapyClick = { /*TODO*/ },
+                        onClick = { },
                     )
                 }
             }

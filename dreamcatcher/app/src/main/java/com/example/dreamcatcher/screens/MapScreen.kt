@@ -25,6 +25,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.dreamcatcher.MainViewModel
 import com.example.dreamcatcher.R
@@ -47,7 +48,8 @@ import com.google.maps.android.compose.CameraPositionState
 @Composable
 fun MapScreen(
     apiKey: String,
-    viewModel: MainViewModel
+    viewModel: MainViewModel,
+    navController: NavController
 ) {
     val cameraPositionState = rememberCameraPositionState()
     val therapyCenters by viewModel.therapyCenters.observeAsState(emptyList())

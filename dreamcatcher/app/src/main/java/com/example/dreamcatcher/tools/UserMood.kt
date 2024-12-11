@@ -1,14 +1,17 @@
 package com.example.dreamcatcher.tools
 
 import android.util.Log
+import android.widget.Space
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -76,8 +79,6 @@ fun MoodDisplay(moods: List<Pair<String, Int>>) {
 }
 
 
-
-
 fun formatMoodWithIcons(
     moodJson: String,
     moodIcons: Map<String, Int>
@@ -134,7 +135,6 @@ fun MoodDisplayWithIcons(
 }
 
 
-
 fun parseMoodJson(moodJson: String): List<Pair<String, Float>> {
     return try {
         val gson = Gson()
@@ -171,7 +171,6 @@ fun aggregateMoodData(dreams: List<Dream>, days: Int? = null): Map<String, Float
 }
 
 
-
 fun getTopMoodForToday(dreams: List<Dream>): Pair<String, Float>? {
     val today = System.currentTimeMillis()
     val todayDreams = dreams.filter { dream ->
@@ -196,7 +195,7 @@ fun getTopMoodForToday(dreams: List<Dream>): Pair<String, Float>? {
 }
 
 
-fun evaluateMood(moods: Map<String, Float>): Pair<String,Boolean>{
+fun evaluateMood(moods: Map<String, Float>): Pair<String, Boolean> {
     val negativeMoods = listOf("sadness", "anger", "disgust", "fear")
     val totalNegativeScore = moods.filterKeys { it in negativeMoods }.values.sum()
     val totalScore = moods.values.sum()
@@ -207,9 +206,9 @@ fun evaluateMood(moods: Map<String, Float>): Pair<String,Boolean>{
         0f
     }
 
-    return if (negativePercentage > 70f){
+    return if (negativePercentage > 30f) {
         "We find your mood is low recently, would you like to talk to someone?" to false
-    }else{
+    } else {
         "You are doing great! Keep it up!" to true
     }
 }
@@ -217,7 +216,7 @@ fun evaluateMood(moods: Map<String, Float>): Pair<String,Boolean>{
 @Composable
 fun MoodStatusCard(
     moods: Map<String, Float>,
-    onTherapyClick: () -> Unit,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Log.d("MoodStatusCard", "Mood: $moods")
@@ -248,10 +247,15 @@ fun MoodStatusCard(
 
             if (!isPositive) {
                 Button(
-                    onClick = onTherapyClick,
+                    onClick = onClick,
                     modifier = Modifier.padding(start = 16.dp)
                 ) {
-                    Text(text = "Find a Therapist")
+                    Icon(
+                        painter = painterResource(id = R.drawable.find),
+                        contentDescription = "Find a therapist",
+                        modifier = Modifier.size(24.dp),
+                        tint = Color.Unspecified
+                    )
                 }
             }
         }
@@ -274,6 +278,6 @@ fun MoodStatusCardPreview() {
 
     MoodStatusCard(
         moods = sampleMoods,
-        onTherapyClick = { Log.d("MoodStatusCard", "Therapy button clicked!") }
+        onClick = { Log.d("MoodStatusCard", "Therapy button clicked!") }
     )
 }

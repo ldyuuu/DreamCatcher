@@ -196,7 +196,7 @@ fun MainApp(
                 }
                 composable("home") {
                     val allDreams by dreamDao.getAllDreams().observeAsState(emptyList())
-                    HomeScreen(viewModel = viewModel)
+                    HomeScreen(viewModel = viewModel,navController = navController)
                 }
                 composable("today") {
                     TodayScreen(todayViewModel = todayViewModel, mainViewModel = viewModel)
@@ -226,7 +226,8 @@ fun MainApp(
                 composable("map") {
                     MapScreen(
                         apiKey = BuildConfig.GOOGLE_MAP_API_KEY,
-                        viewModel = viewModel
+                        viewModel = viewModel,
+                        navController = navController
                     )
                 }
                 composable("settings") {
