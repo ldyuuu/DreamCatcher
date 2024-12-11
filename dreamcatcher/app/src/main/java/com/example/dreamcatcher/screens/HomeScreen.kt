@@ -34,16 +34,26 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.ContentScale
+import androidx.navigation.NavHostController
+import com.example.dreamcatcher.MainViewModel
 
 
 @Composable
-fun HomeScreen(dreams: List<Dream>) {
+fun HomeScreen(viewModel: MainViewModel,navController: NavHostController) {
+    // Observing dreams for the logged-in user
+    val dreams = viewModel.getDreamsForLoggedInUser().observeAsState(emptyList()).value
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -51,14 +61,6 @@ fun HomeScreen(dreams: List<Dream>) {
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         // Top Section
-        item {
-            Text(
-                text = "In Focus",
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-        }
-
         item {
             LazyRow(
                 modifier = Modifier
@@ -68,11 +70,38 @@ fun HomeScreen(dreams: List<Dream>) {
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 items(5) { index ->
-                    InfoCard(
-                        title = "Card $index",
-                        description = "Details for Card $index",
-                        cardWithFraction = 0.8f
-                    )
+                    when (index) {
+                        0 -> InfoCardWithLink(
+                            title = "Enter Today's Dream",
+                            description = "Log your dream for today",
+                            navController = navController,
+                            destination = "today",
+                            backgroundResId = R.drawable.today_card_background
+                        )
+                        1 -> InfoCardWithLink(
+                            title = "View Dream Calendar",
+                            description = "Check your dream logs",
+                            navController = navController,
+                            destination = "calendar",
+                            backgroundResId = R.drawable.calendar_card_background
+                        )
+//                        2 -> InfoCardWithLink(
+//                            title = "Settings",
+//                            description = "Adjust your preferences",
+//                            navController = navController,
+//                            destination = "settings",
+//                            backgroundResId = R.drawable.settings_card_background
+//                        )
+                        2 ->InfoCardWithLink(
+                                title = "Find Nearby Therapists",
+                                description = "Locate therapists near your location",
+                                navController = navController,
+                                destination = "map",
+                                backgroundResId = R.drawable.map_card_background
+                            )
+
+
+                    }
                 }
             }
         }
@@ -162,9 +191,9 @@ fun HomeScreen(dreams: List<Dream>) {
                 }
             }
         }
-
     }
 }
+
 
 
 @Composable
@@ -329,27 +358,70 @@ fun BarChart(
     }
 }
 
+@Composable
+fun InfoCardWithLink(
+    title: String,
+    description: String,
+    navController: NavHostController,
+    destination: String,
+    backgroundResId: Int
+) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val cardWidth = screenWidth * 0.8f
+
+    Card(
+        modifier = Modifier
+            .width(cardWidth)
+            .height(220.dp)
+            .padding(8.dp),
+        elevation = CardDefaults.elevatedCardElevation(8.dp),
+        onClick = { navController.navigate(destination) }
+    ) {
+        Box {
+            Image(
+                painter = painterResource(id = backgroundResId),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        shadow = Shadow(
+                            color = Color.Black,
+                            offset = Offset(2f, 2f), // Shadow offset
+                            blurRadius = 4f
+                        )
+                    )
+                )
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        color = Color.White,
+                        shadow = Shadow(
+                            color = Color.Black,
+                            offset = Offset(2f, 2f),
+                            blurRadius = 4f
+                        )
+                    )
+                )
+            }
+        }
+    }
+}
+
 
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
-    val sampleDreams = listOf(
-        Dream(
-            userId = 1,
-            title = "Dream 1",
-            content = "Content 1",
-            mood = """[{"label": "joy", "score": 0.8}, {"label": "sadness", "score": 0.2}]""",
-            createdAt = System.currentTimeMillis(),
-            aiImageURL = ""
-        ),
-        Dream(
-            userId = 1,
-            title = "Dream 2",
-            content = "Content 2",
-            mood = """[{"label": "joy", "score": 0.6}, {"label": "anger", "score": 0.4}]""",
-            createdAt = System.currentTimeMillis(),
-            aiImageURL = ""
-        )
-    )
-    HomeScreen(sampleDreams)
+
 }

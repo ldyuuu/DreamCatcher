@@ -195,8 +195,7 @@ fun MainApp(
                     )
                 }
                 composable("home") {
-                    val allDreams by dreamDao.getAllDreams().observeAsState(emptyList())
-                    HomeScreen(dreams = allDreams)
+                    HomeScreen(viewModel = viewModel,navController = navController)
                 }
                 composable("today") {
                     TodayScreen(todayViewModel = todayViewModel, mainViewModel = viewModel)
@@ -342,7 +341,16 @@ fun BottomNavigationBar(
             BottomNavigationItem(
                 selected = selected,
                 onClick = {
-                    if (!selected) {
+                    if (route == "home") {
+                        // Force reset navigation stack to home
+                        navController.navigate("home") {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true // Clears the back stack up to home
+                            }
+                            launchSingleTop = true // Avoids multiple home instances
+                            restoreState = false // Always reload home state
+                        }
+                    } else if (!selected) {
                         navController.navigate(route) {
                             popUpTo(navController.graph.startDestinationId) {
                                 saveState = true
