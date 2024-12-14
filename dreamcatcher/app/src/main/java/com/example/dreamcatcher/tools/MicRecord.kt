@@ -124,8 +124,8 @@ fun MicRecord(
 
 
 
-fun fetchEmotion(inputText: String, onResult: (List<HuggingFaceResponse>) -> Unit) {
-    CoroutineScope(Dispatchers.IO).launch {
+suspend fun fetchEmotion(inputText: String): List<HuggingFaceResponse> {
+    return withContext(Dispatchers.IO) {
         try {
             Log.d("HuggingFace", "Sending text to Hugging Face API: $inputText")
             Log.d("HuggingFace", "API Key: ${BuildConfig.HUGGINGFACE_API_KEY}")
@@ -136,14 +136,10 @@ fun fetchEmotion(inputText: String, onResult: (List<HuggingFaceResponse>) -> Uni
 
             val flattenedResponse = response.flatten()
             Log.d("HuggingFace", "Hugging Face Response: $response")
-            withContext(Dispatchers.Main) {
-                onResult(flattenedResponse)
-            }
+            flattenedResponse
         } catch (e: Exception) {
             Log.e("HuggingFace", "Error during Hugging Face API request: ${e.message}")
-            withContext(Dispatchers.Main) {
-                onResult(emptyList())
-            }
+            emptyList()
         }
     }
 }
