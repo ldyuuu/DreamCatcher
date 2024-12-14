@@ -74,16 +74,16 @@ fun AccountScreen(viewModel: MainViewModel,
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text("Dark Mode")
-            Switch(
-                checked = isDarkModeEnabled,
-                onCheckedChange = { viewModel.setDarkModeEnabled(it) }
-            )
-        }
+//        Row(
+//            modifier = Modifier.fillMaxWidth(),
+//            horizontalArrangement = Arrangement.SpaceBetween
+//        ) {
+//            Text("Dark Mode")
+//            Switch(
+//                checked = isDarkModeEnabled,
+//                onCheckedChange = { viewModel.setDarkModeEnabled(it) }
+//            )
+//        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
