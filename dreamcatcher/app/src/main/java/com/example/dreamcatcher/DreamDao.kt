@@ -45,4 +45,11 @@ interface DreamDao {
 
     @Query("SELECT * FROM users WHERE userId = :userId")
     suspend fun getUserById(userId: Int): User?
+
+    @Dao
+    interface DreamDao {
+        @Insert(onConflict = OnConflictStrategy.REPLACE)
+        suspend fun insertDream(dream: Dream)
+    }
+
 }

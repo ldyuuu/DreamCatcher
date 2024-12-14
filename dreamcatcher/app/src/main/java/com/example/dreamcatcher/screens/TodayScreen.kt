@@ -1,6 +1,7 @@
 package com.example.dreamcatcher.screens
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -35,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -52,10 +54,12 @@ import com.example.dreamcatcher.tools.MicRecord
 import com.example.dreamcatcher.R
 import com.example.dreamcatcher.network.HuggingFaceResponse
 import com.example.dreamcatcher.tools.MoodDisplay
+import com.example.dreamcatcher.tools.downloadImage
 import com.example.dreamcatcher.tools.fetchEmotion
 import com.example.dreamcatcher.tools.moodIcons
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 
@@ -74,17 +78,46 @@ open class TodayViewModel(private val dreamDao: DreamDao) : ViewModel() {
         isRecordingState.value = isRecording
     }
 
-    fun saveDream(userId: Int, aiImageURL: String, onComplete: (Boolean) -> Unit) {
+    fun saveDream(
+        context: Context,
+        userId: Int,
+        aiImageURL: String,
+        onComplete: (Boolean) -> Unit
+    ) {
         viewModelScope.launch {
             val content = spokenTextState.value
             val userExists = dreamDao.getUserById(userId) != null
+
+            if (content.isEmpty()) {
+                Log.e("TodayViewModel", "Content is empty")
+                onComplete(false)
+                return@launch
+            }
+
             if (!userExists) {
                 Log.e("TodayViewModel", "User $userId not found")
                 onComplete(false)
                 return@launch
             }
 
-            fetchEmotion(content) { emotion ->
+            val localImagePath = if (aiImageURL.startsWith("/data/")) {
+                Log.d("TodayViewModel", "Using existing local image path: $aiImageURL")
+                aiImageURL
+            } else {
+                // Download the image if it's a remote URL
+                Log.d("TodayViewModel", "Downloading image from URL: $aiImageURL")
+                downloadImage(context, aiImageURL, "dream_${System.currentTimeMillis()}.jpg")
+            }
+
+            Log.d("TodayViewModel", "AI Image url: $aiImageURL")
+            if (localImagePath == null) {
+                Log.e("TodayViewModel", "Error downloading image")
+                onComplete(false)
+                return@launch
+            }
+
+            try {
+                val emotion = fetchEmotion(content)
                 val primaryMood = emotion.maxByOrNull { it.score }?.label ?: "Neutral"
                 val allMoodJsons = Gson().toJson(emotion)
                 val calculatedTopMoods = emotion.sortedByDescending { it.score }
@@ -99,19 +132,17 @@ open class TodayViewModel(private val dreamDao: DreamDao) : ViewModel() {
                     title = "Generated Dream",
                     content = content,
                     mood = allMoodJsons,
-                    aiImageURL = aiImageURL
+                    aiImageURL = localImagePath
                 )
+                dreamDao.insertDream(newDream)
+                dailyImages.value = dailyImages.value + localImagePath
 
-                viewModelScope.launch {
-                    try {
-                        dreamDao.insertDream(newDream)
-                        dailyImages.value = dailyImages.value + aiImageURL
-                        onComplete(true)
-                    } catch (e: Exception) {
-                        Log.e("TodayViewModel", "Error saving dream: ${e.message}")
-                        onComplete(false)
-                    }
-                }
+                // Save dream successfully
+                onComplete(true)
+            } catch (e: Exception) {
+                // Error saving dream
+                Log.e("TodayViewModel", "Error saving dream: ${e.message}")
+                onComplete(false)
             }
         }
     }
@@ -139,7 +170,7 @@ fun TodayScreen(todayViewModel: TodayViewModel, mainViewModel: MainViewModel) {
     val isEditingState = remember { mutableStateOf(false) }
     val isGeneratingImage = remember { mutableStateOf(false) }
     val dailyImages = todayViewModel.dailyImages
-
+    val context = LocalContext.current
     val loggedInUser = mainViewModel.loggedInUser.value
 
     LaunchedEffect(Unit) {
@@ -205,7 +236,10 @@ fun TodayScreen(todayViewModel: TodayViewModel, mainViewModel: MainViewModel) {
                     iconRes = icons[0].second,
                     description = "Paint",
                     label = "Paint",
-                    onClick = { isGeneratingImage.value = true },
+                    onClick = {
+                        Log.d("TodayScreen", "Paint button clicked")
+                        isGeneratingImage.value = true
+                    },
                     enabled = spokenTextState.value.isNotEmpty() && spokenTextState.value != "Press the microphone to speak"
                 )
                 IconButton(
@@ -214,9 +248,14 @@ fun TodayScreen(todayViewModel: TodayViewModel, mainViewModel: MainViewModel) {
                     label = "Accept",
                     onClick = {
                         val userId = loggedInUser?.userId ?: return@IconButton
+                        val imageUrl = generatedImageUrl
+
+
                         todayViewModel.saveDream(
+                            context = context,
                             userId = userId,
-                            aiImageURL = generatedImageUrl.value ?: "",
+//                            aiImageURL = generatedImageUrl.value ?: "",
+                            aiImageURL = imageUrl.value ?: "",
                             onComplete = { success ->
                                 if (!success) Log.e("TodayScreen", "Error saving dream")
                             }
@@ -261,6 +300,7 @@ fun TodayScreen(todayViewModel: TodayViewModel, mainViewModel: MainViewModel) {
             ImageGeneration(
                 prompt = spokenTextState.value,
                 onImageGenerated = { imageUrl ->
+                    Log.d("TodayScreen", "Generated Image: $imageUrl")
                     generatedImageUrl.value = imageUrl
                     todayViewModel.dailyImages.value = todayViewModel.dailyImages.value + imageUrl
                     isGeneratingImage.value = false

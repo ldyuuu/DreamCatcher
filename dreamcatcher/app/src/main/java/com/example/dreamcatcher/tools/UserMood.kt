@@ -71,7 +71,6 @@ fun MoodDisplay(moods: List<Pair<String, Int>>) {
 }
 
 
-
 fun formatMoodWithIcons(
     moodJson: String,
     moodIcons: Map<String, Int>
@@ -128,7 +127,6 @@ fun MoodDisplayWithIcons(
 }
 
 
-
 fun parseMoodJson(moodJson: String): List<Pair<String, Float>> {
     return try {
         val gson = Gson()
@@ -165,7 +163,6 @@ fun aggregateMoodData(dreams: List<Dream>, days: Int? = null): Map<String, Float
 }
 
 
-
 fun getTopMoodForToday(dreams: List<Dream>): Pair<String, Float>? {
     val today = System.currentTimeMillis()
     val todayDreams = dreams.filter { dream ->
@@ -190,7 +187,7 @@ fun getTopMoodForToday(dreams: List<Dream>): Pair<String, Float>? {
 }
 
 
-fun evaluateMood(moods: Map<String, Float>): Pair<String,Boolean>{
+fun evaluateMood(moods: Map<String, Float>): Pair<String, Boolean> {
     val negativeMoods = listOf("sadness", "anger", "disgust", "fear")
     val totalNegativeScore = moods.filterKeys { it in negativeMoods }.values.sum()
     val totalScore = moods.values.sum()
@@ -201,9 +198,9 @@ fun evaluateMood(moods: Map<String, Float>): Pair<String,Boolean>{
         0f
     }
 
-    return if (negativePercentage > 60f){
-        "Based on your mood trends over the last 14 days, it seems like you've been feeling low. It might help to talk to a mental health professional for support. Would you like assistance in finding one?" to false
-    }else{
+    return if (negativePercentage > 50f) {
+        "Based on your mood trends over the last 14 days, it seems like you've been feeling low. It might help to talk to a mental health professional for support. Use Map to find someone to talk to nearby" to false
+    } else {
         "Great job! Over the past 14 days, your mood has been positive. Keep up the good energy!" to true
     }
 }
