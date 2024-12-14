@@ -10,12 +10,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -38,8 +36,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -52,14 +48,10 @@ import com.example.dreamcatcher.MainViewModel
 import com.example.dreamcatcher.tools.ImageGeneration
 import com.example.dreamcatcher.tools.MicRecord
 import com.example.dreamcatcher.R
-import com.example.dreamcatcher.network.HuggingFaceResponse
 import com.example.dreamcatcher.tools.MoodDisplay
 import com.example.dreamcatcher.tools.downloadImage
 import com.example.dreamcatcher.tools.fetchEmotion
-import com.example.dreamcatcher.tools.moodIcons
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 
@@ -159,7 +151,7 @@ open class TodayViewModel(private val dreamDao: DreamDao) : ViewModel() {
 }
 
 
-@SuppressLint("StateFlowValueCalledInComposition") //?
+@SuppressLint("StateFlowValueCalledInComposition") // Suppress warning for using StateFlow in Composable
 @Composable
 fun TodayScreen(todayViewModel: TodayViewModel, mainViewModel: MainViewModel) {
     val spokenTextState = todayViewModel.spokenTextState
@@ -291,7 +283,7 @@ fun TodayScreen(todayViewModel: TodayViewModel, mainViewModel: MainViewModel) {
             } else {
                 MicRecord(
                     spokenTextState = todayViewModel.spokenTextState,
-                    isRecordingState = todayViewModel.isRecordingState
+                    isRecording = todayViewModel.isRecordingState
                 )
             }
         }
@@ -381,34 +373,6 @@ fun EditDialog(
             }
         }
     )
-}
-
-@Composable
-fun MoodDisplay(moods: List<Pair<String, Int>>) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        moods.forEach { (mood, percentage) ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    painter = painterResource(id = moodIcons[mood] ?: R.drawable.neutral),
-                    contentDescription = mood,
-                    modifier = Modifier.size(32.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("$mood: $percentage%", style = MaterialTheme.typography.bodyMedium)
-            }
-        }
-    }
 }
 
 

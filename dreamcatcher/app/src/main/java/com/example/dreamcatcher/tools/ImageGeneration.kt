@@ -22,6 +22,7 @@ fun ImageGeneration(prompt: String, onImageGenerated: (String) -> Unit) {
             isLoading.value = true
             scope.launch {
                 try {
+                    // Call the OpenAI API to generate an image based on the prompt
                     val response = RetrofitInstance.openAIImageAPI.generateImage(
                         ImageRequest(prompt = prompt, n = 1, size = "512x512")
                     )
@@ -37,7 +38,6 @@ fun ImageGeneration(prompt: String, onImageGenerated: (String) -> Unit) {
                         if (localImagePath != null) {
                             onImageGenerated(localImagePath)
                             Log.d("ImageGeneration", "Local Image Path: $localImagePath")
-
                         } else {
                             Log.d("ImageGeneration", "Failed to save image")
                             Toast.makeText(context, "Failed to save image", Toast.LENGTH_SHORT)

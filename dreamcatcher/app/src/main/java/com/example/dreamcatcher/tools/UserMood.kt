@@ -1,14 +1,12 @@
 package com.example.dreamcatcher.tools
 
 import android.util.Log
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -19,11 +17,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.dreamcatcher.BuildConfig
 import com.example.dreamcatcher.Dream
 import com.example.dreamcatcher.R
+import com.example.dreamcatcher.network.HuggingFaceRequest
+import com.example.dreamcatcher.network.HuggingFaceResponse
+import com.example.dreamcatcher.network.RetrofitInstance
 import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -38,6 +41,9 @@ val moodIcons = mapOf(
 )
 
 
+/**
+ * Dynamically resolved mood icons based on the mood label.
+ */
 @Composable
 fun MoodDisplay(moods: List<Pair<String, Int>>) {
     Row(
@@ -70,11 +76,13 @@ fun MoodDisplay(moods: List<Pair<String, Int>>) {
     }
 }
 
-
-fun formatMoodWithIcons(
-    moodJson: String,
-    moodIcons: Map<String, Int>
-): List<Pair<Int, String>> {
+/**
+ * Format the mood JSON string into a list of mood labels and scores,
+ * and sort them by score, return the top 4 moods.
+ */
+fun formatMood(
+    moodJson: String
+): List<Pair<String, Int>> {
     return try {
         val gson = Gson()
         val jsonArray = gson.fromJson(moodJson, com.google.gson.JsonArray::class.java)
@@ -82,51 +90,17 @@ fun formatMoodWithIcons(
         jsonArray.mapNotNull { element ->
             val label = element.asJsonObject["label"].asString
             val score = (element.asJsonObject["score"].asFloat * 100).toInt()
-            val iconRes = moodIcons[label]
-            iconRes?.let { it to "$label: $score%" }
-        }
-            .sortedByDescending { it.second.split(": ")[1].replace("%", "").toInt() }
-            .take(4)
+            label to score
+        }.sortedByDescending { it.second }.take(4)
     } catch (e: Exception) {
         emptyList()
     }
 }
 
 
-@Composable
-fun MoodDisplayWithIcons(
-    moods: List<Pair<Int, String>>
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        moods.forEach { (iconRes, text) ->
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(horizontal = 8.dp)
-            ) {
-                // Icon
-                Image(
-                    painter = painterResource(id = iconRes),
-                    contentDescription = text,
-                    modifier = Modifier.size(36.dp)
-                )
-                // Text Label
-                Text(
-                    text = text,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-        }
-    }
-}
-
-
+/**
+ * Parse the mood JSON string into a list of mood labels and scores.
+ */
 fun parseMoodJson(moodJson: String): List<Pair<String, Float>> {
     return try {
         val gson = Gson()
@@ -142,6 +116,9 @@ fun parseMoodJson(moodJson: String): List<Pair<String, Float>> {
 }
 
 
+/**
+ * Return n days of mood data from the given list of dreams.
+ */
 fun aggregateMoodData(dreams: List<Dream>, days: Int? = null): Map<String, Float> {
     val filteredDreams = if (days != null) {
         val cutoffTime = System.currentTimeMillis() - days * 24 * 60 * 60 * 1000L
@@ -163,6 +140,9 @@ fun aggregateMoodData(dreams: List<Dream>, days: Int? = null): Map<String, Float
 }
 
 
+/**
+ * Return the top mood for today, if there are multiple dreams, return the top after calculate avg
+ */
 fun getTopMoodForToday(dreams: List<Dream>): Pair<String, Float>? {
     val today = System.currentTimeMillis()
     val todayDreams = dreams.filter { dream ->
@@ -187,6 +167,10 @@ fun getTopMoodForToday(dreams: List<Dream>): Pair<String, Float>? {
 }
 
 
+/**
+ * Calculate the percentage of negative moods in the given mood data, and return a
+ * message based on the result.
+ */
 fun evaluateMood(moods: Map<String, Float>): Pair<String, Boolean> {
     val negativeMoods = listOf("sadness", "anger", "disgust", "fear")
     val totalNegativeScore = moods.filterKeys { it in negativeMoods }.values.sum()
@@ -240,21 +224,23 @@ fun MoodStatusCard(
     }
 }
 
+suspend fun fetchEmotion(inputText: String): List<HuggingFaceResponse> {
+    return withContext(Dispatchers.IO) {
+        try {
+            Log.d("HuggingFace", "Sending text to Hugging Face API: $inputText")
+            Log.d("HuggingFace", "API Key: ${BuildConfig.HUGGINGFACE_API_KEY}")
 
-@Preview(showBackground = true)
-@Composable
-fun MoodStatusCardPreview() {
-    val sampleMoods = mapOf(
-        "fear" to 0.16f,
-        "sadness" to 0.12f,
-        "joy" to 0.18f,
-        "neutral" to 0.13f,
-        "surprise" to 0.14f,
-        "anger" to 0.13f,
-        "disgust" to 0.1f
-    )
+            val response = RetrofitInstance.huggingFaceAPI.analyzeEmotion(
+                request = HuggingFaceRequest(inputs = inputText)
+            )
 
-    MoodStatusCard(
-        moods = sampleMoods,
-    )
+            val flattenedResponse = response.flatten() // Clean up response
+            Log.d("HuggingFace", "Hugging Face Response: $response")
+            flattenedResponse
+        } catch (e: Exception) {
+            Log.e("HuggingFace", "Error during Hugging Face API request: ${e.message}")
+            emptyList()
+        }
+    }
 }
+

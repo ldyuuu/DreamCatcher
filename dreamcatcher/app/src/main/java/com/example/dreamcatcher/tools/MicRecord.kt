@@ -28,19 +28,11 @@ import androidx.core.content.ContextCompat
 import com.example.dreamcatcher.BuildConfig
 import com.example.dreamcatcher.R
 
-import com.example.dreamcatcher.network.HuggingFaceRequest
-import com.example.dreamcatcher.network.HuggingFaceResponse
-import com.example.dreamcatcher.network.RetrofitInstance
-import com.google.gson.Gson
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @Composable
 fun MicRecord(
     spokenTextState: MutableState<String>,
-    isRecordingState: MutableState<Boolean>
+    isRecording: MutableState<Boolean>
 ) {
     val context = LocalContext.current
 
@@ -51,7 +43,7 @@ fun MicRecord(
             val matches = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
             val spokenText = matches?.get(0) ?: "No speech detected"
             spokenTextState.value = spokenText
-            isRecordingState.value = false
+            isRecording.value = false
         } else {
             spokenTextState.value = "Didn't catch that. Please try again."
         }
@@ -61,22 +53,27 @@ fun MicRecord(
         // Show button with microphone icon and placeholder text
         Button(
             onClick = {
-                isRecordingState.value = true
+                isRecording.value = true
                 if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
                     == PackageManager.PERMISSION_GRANTED
                 ) {
                     try {
                         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                             putExtra(
-                                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+                                RecognizerIntent.EXTRA_LANGUAGE_MODEL, // conversational speech
+                                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM // casual phrases
                             )
+                            // Add specific information
                             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US")
                             putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now...")
                         }
                         speechRecognizerLauncher.launch(intent)
                     } catch (e: ActivityNotFoundException) {
-                        Toast.makeText(context, "Speech recognition not supported", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            "Speech recognition not supported",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 } else {
                     ActivityCompat.requestPermissions(
@@ -120,27 +117,4 @@ fun MicRecord(
     }
 }
 
-
-
-
-
-suspend fun fetchEmotion(inputText: String): List<HuggingFaceResponse> {
-    return withContext(Dispatchers.IO) {
-        try {
-            Log.d("HuggingFace", "Sending text to Hugging Face API: $inputText")
-            Log.d("HuggingFace", "API Key: ${BuildConfig.HUGGINGFACE_API_KEY}")
-
-            val response = RetrofitInstance.huggingFaceAPI.analyzeEmotion(
-                request = HuggingFaceRequest(inputs = inputText)
-            )
-
-            val flattenedResponse = response.flatten()
-            Log.d("HuggingFace", "Hugging Face Response: $response")
-            flattenedResponse
-        } catch (e: Exception) {
-            Log.e("HuggingFace", "Error during Hugging Face API request: ${e.message}")
-            emptyList()
-        }
-    }
-}
 

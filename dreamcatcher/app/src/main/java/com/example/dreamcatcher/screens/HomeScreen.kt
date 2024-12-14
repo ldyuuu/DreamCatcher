@@ -52,17 +52,10 @@ import com.example.dreamcatcher.MainViewModel
 import com.example.dreamcatcher.tools.BarChart
 import com.example.dreamcatcher.tools.MoodStatusCard
 import com.example.dreamcatcher.tools.PieChart
+import com.example.dreamcatcher.tools.aggregateMoodData
 import com.example.dreamcatcher.tools.getTopMoodForToday
+import com.example.dreamcatcher.tools.parseMoodJson
 
-val moodColors = mapOf(
-    "joy" to Color(0xFFF2D923), // Yellow
-    "sadness" to Color(0xFF2196F3), // Blue
-    "anger" to Color(0xFFF44336), // Red
-    "neutral" to Color(0xFF7BF73E), // Green
-    "surprise" to Color(0xFFFF9800), // Orange
-    "disgust" to Color(0xFFED7F4A), // Dark red
-    "fear" to Color(0xFF673AB7) // Purple
-)
 
 @Composable
 fun HomeScreen(
@@ -78,6 +71,7 @@ fun HomeScreen(
         .width(screenWidth * 0.8f)
         .height(220.dp)
         .padding(8.dp)
+
     val allMoods = if (topMood != null) {
         aggregateMoodData(dreams.filter { dream ->
             val dreamDate =
@@ -89,6 +83,7 @@ fun HomeScreen(
             dreamDate == currentDate
         })
     } else null
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -140,13 +135,7 @@ fun HomeScreen(
                                 destination = "calendar",
                                 backgroundResId = R.drawable.calendar_card_background
                             )
-//                        2 -> InfoCardWithLink(
-//                            title = "Settings",
-//                            description = "Adjust your preferences",
-//                            navController = navController,
-//                            destination = "settings",
-//                            backgroundResId = R.drawable.settings_card_background
-//                        )
+
                             "Show Nearby Therapists" -> InfoCardWithLink(
                                 title = "Find Nearby Therapists",
                                 description = "Locate therapists near your location",
@@ -199,7 +188,6 @@ fun HomeScreen(
                     if (dreams.isNotEmpty()) {
                         BarChart(
                             moodData = sevenDayMood,
-                            barColor = MaterialTheme.colorScheme.primary,
                             textColor = MaterialTheme.colorScheme.onBackground
                         )
                     } else {
@@ -237,7 +225,6 @@ fun HomeScreen(
                     if (dreams.isNotEmpty()) {
                         BarChart(
                             moodData = thirtyDayMood,
-                            barColor = MaterialTheme.colorScheme.primary,
                             textColor = MaterialTheme.colorScheme.onBackground
                         )
                     } else {
@@ -263,7 +250,7 @@ fun InfoCard(
     cardWithFraction: Float = 0.85f
 ) {
     val screenWith = LocalConfiguration.current.screenWidthDp.dp
-    val cardWidth = screenWith * cardWithFraction
+//    val cardWidth = screenWith * cardWithFraction
 
     Card(
         modifier = modifier,
@@ -336,41 +323,6 @@ fun InfoCard(
 }
 
 
-fun parseMoodJson(moodJson: String): List<Pair<String, Float>> {
-    return try {
-        val gson = Gson()
-        val jsonArray = gson.fromJson(moodJson, List::class.java) as List<Map<String, Any>>
-        jsonArray.map {
-            val label = it["label"] as String
-            val score = (it["score"] as Double).toFloat()
-            label to score
-        }
-    } catch (e: Exception) {
-        emptyList()
-    }
-}
-
-
-fun aggregateMoodData(dreams: List<Dream>, days: Int? = null): Map<String, Float> {
-    val filteredDreams = if (days != null) {
-        val cutoffTime = System.currentTimeMillis() - days * 24 * 60 * 60 * 1000L
-        dreams.filter { it.createdAt >= cutoffTime }
-    } else {
-        dreams
-    }
-
-
-    val moodScores = mutableMapOf<String, MutableList<Float>>()
-
-    filteredDreams.forEach { dream ->
-        val moods = parseMoodJson(dream.mood)
-        moods.forEach { (label, score) ->
-            moodScores.computeIfAbsent(label) { mutableListOf() }.add(score)
-        }
-    }
-
-    return moodScores.mapValues { (_, scores) -> scores.average().toFloat() }
-}
 
 
 @Composable
@@ -432,11 +384,4 @@ fun InfoCardWithLink(
             }
         }
     }
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun HomeScreenPreview() {
-
 }
