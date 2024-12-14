@@ -287,12 +287,13 @@ fun InfoCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Spacer(modifier = Modifier.width(30.dp))
                 // Pie Chart on the Left
                 if (allMoods != null) {
                     PieChart(
                         moodData = allMoods,
                         modifier = Modifier
-                            .weight(1f)
+                            .weight(1f, fill = false)
                             .size(130.dp)
                             .padding(end = 16.dp)
                     )
