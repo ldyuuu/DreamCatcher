@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.dreamcatcher.screens.AccountScreen
@@ -53,6 +54,8 @@ import com.google.android.gms.common.api.ApiException
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import kotlinx.coroutines.launch
+
 
 object AuthManager {
     val isLoggedIn = mutableStateOf(false)
@@ -77,17 +80,23 @@ class MainActivity : ComponentActivity() {
             TodayViewModelFactory(dreamDao)
         )[TodayViewModel::class.java]
 
-        setContent {
-            val navController = rememberNavController()
-            DreamcatcherTheme {
-                MainApp(
-                    viewModel = viewModel,
-                    todayViewModel = todayViewModel,
-                    navController = navController,
-                    dreamDao = dreamDao
-                )
+        lifecycleScope.launch {
+            viewModel.loginState.collect { (isLoggedIn, userId) ->
+                setContent {
+
+                    val navController = rememberNavController()
+                    DreamcatcherTheme {
+                        MainApp(
+                            viewModel = viewModel,
+                            todayViewModel=todayViewModel,
+                            navController = navController,
+                            startDestination = if (isLoggedIn) "home" else "login"
+                        )
+                    }
+                }
             }
         }
+
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -115,12 +124,14 @@ class MainActivity : ComponentActivity() {
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
                     Log.w("GoogleSignIn", "signInWithCredential:success", task.exception)
-                    // 登录成功
                     val currentUser = auth.currentUser
                     viewModel.updateFirebaseUser(currentUser)
-
                     currentUser?.let { user ->
                         viewModel.syncFirebaseUserWithLocalData(user)
+                        val localUser = viewModel.loggedInUser.value
+                        localUser?.let { user ->
+                            viewModel.setLoginState(isLoggedIn = true, userId = user.userId.toString())
+                        }
                     }
                     onSuccess()
                 } else {
@@ -143,7 +154,7 @@ fun MainApp(
     viewModel: MainViewModel,
     todayViewModel: TodayViewModel,
     navController: NavHostController,
-    dreamDao: DreamDao
+    startDestination: String,
 ) {
 
     val loggedInUser by viewModel.loggedInUser.collectAsState()
@@ -181,7 +192,7 @@ fun MainApp(
         ) { innerPadding ->
             NavHost(
                 navController = navController,
-                startDestination = if (isLoggedIn) "home" else "login",
+                startDestination = startDestination,
                 modifier = Modifier.padding(innerPadding)
             ) {
                 composable("login") {
@@ -239,7 +250,7 @@ fun MainApp(
                     )
                 }
                 composable("settings") {
-                    SettingScreen(navController = navController)
+                    SettingScreen(navController = navController,viewModel=viewModel)
                 }
 
                 composable("database_testing") {
@@ -268,7 +279,6 @@ fun MainApp(
                         //onLogout = { currentScreen = "Login" }
                     )
                 }
-
             }
         }
     }
@@ -353,6 +363,13 @@ fun BottomNavigationBar(
                             launchSingleTop = true // Avoids multiple home instances
                             restoreState = false // Always reload home state
                         }
+                    } else if (route=="settings"){
+                                navController.navigate("settings") {
+                                    popUpTo("settings") {
+                                        inclusive = true
+                                    }
+                                    launchSingleTop = true
+                                }
                     } else if (!selected) {
                         navController.navigate(route) {
                             popUpTo(navController.graph.startDestinationId) {

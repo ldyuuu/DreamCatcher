@@ -17,7 +17,9 @@ private val SETTINGS_KEY = stringPreferencesKey("home_screen_settings")
 
 class DataStoreManager(private val context: Context) {
     private val DARK_MODE_KEY = booleanPreferencesKey("dark_mode")
-
+    private val SETTINGS_KEY = stringPreferencesKey("home_screen_settings")
+    private val LOGIN_STATE_KEY = booleanPreferencesKey("is_logged_in")
+    private val USER_ID_KEY = stringPreferencesKey("user_id")
 
     private val gson = Gson()
 
@@ -64,6 +66,23 @@ class DataStoreManager(private val context: Context) {
     suspend fun saveHomeScreenSettings(settings: Map<String, Boolean>) {
         context.dataStore.edit { preferences ->
             preferences[SETTINGS_KEY] = gson.toJson(settings) // Serialize Map to JSON
+        }
+    }
+    val loginState: Flow<Pair<Boolean, String?>> = context.dataStore.data
+        .map { preferences ->
+            val isLoggedIn = preferences[LOGIN_STATE_KEY] ?: false
+            val userId = preferences[USER_ID_KEY]
+            isLoggedIn to userId
+        }
+
+    suspend fun setLoginState(isLoggedIn: Boolean, userId: String?) {
+        context.dataStore.edit { preferences ->
+            preferences[LOGIN_STATE_KEY] = isLoggedIn
+            if (userId != null) {
+                preferences[USER_ID_KEY] = userId
+            } else {
+                preferences.remove(USER_ID_KEY)
+            }
         }
     }
 

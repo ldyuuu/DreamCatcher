@@ -101,6 +101,7 @@ fun HomeScreen(
             "Show Nearby Therapists",
             "Show Trend Analysis"
         )
+
         // Top Section
         item {
             LazyRow(
@@ -156,13 +157,7 @@ fun HomeScreen(
         }
 
         // Bottom Section
-        item {
-            Text(
-                text = "At a Glance",
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-        }
+
 
         // Graph placeholder
         item {
