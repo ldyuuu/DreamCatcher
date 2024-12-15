@@ -1,7 +1,6 @@
 package com.example.dreamcatcher.tools
 
 import android.Manifest
-import android.util.Log
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -25,7 +24,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.example.dreamcatcher.BuildConfig
 import com.example.dreamcatcher.R
 
 
@@ -40,8 +38,8 @@ fun MicRecord(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == ComponentActivity.RESULT_OK && result.data != null) {
-            val matches = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
-            val spokenText = matches?.get(0) ?: "No speech detected"
+            val speechResults = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            val spokenText = speechResults?.get(0) ?: "No speech detected"
             spokenTextState.value = spokenText
             isRecording.value = false
         } else {
@@ -49,7 +47,9 @@ fun MicRecord(
         }
     }
 
-    if (spokenTextState.value == "Press the microphone to speak" || spokenTextState.value.isEmpty()) {
+    if (spokenTextState.value == "Press the microphone to speak"
+        || spokenTextState.value.isEmpty()
+        || spokenTextState.value == "Didn't catch that. Please try again.") {
         // Show button with microphone icon and placeholder text
         Button(
             onClick = {

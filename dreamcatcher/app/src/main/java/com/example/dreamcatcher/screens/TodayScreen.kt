@@ -81,37 +81,30 @@ open class TodayViewModel(private val dreamDao: DreamDao) : ViewModel() {
             val userExists = dreamDao.getUserById(userId) != null
 
             if (content.isEmpty()) {
-                Log.e("TodayViewModel", "Content is empty")
                 onComplete(false)
                 return@launch
             }
 
             if (!userExists) {
-                Log.e("TodayViewModel", "User $userId not found")
                 onComplete(false)
                 return@launch
             }
 
             val localImagePath = if (aiImageURL.startsWith("/data/")) {
-                Log.d("TodayViewModel", "Using existing local image path: $aiImageURL")
                 aiImageURL
             } else {
-                // Download the image if it's a remote URL
-                Log.d("TodayViewModel", "Downloading image from URL: $aiImageURL")
+                // Download the image
                 downloadImage(context, aiImageURL, "dream_${System.currentTimeMillis()}.jpg")
             }
 
-            Log.d("TodayViewModel", "AI Image url: $aiImageURL")
             if (localImagePath == null) {
-                Log.e("TodayViewModel", "Error downloading image")
                 onComplete(false)
                 return@launch
             }
 
             try {
                 val emotion = fetchEmotion(content)
-                val primaryMood = emotion.maxByOrNull { it.score }?.label ?: "Neutral"
-                val allMoodJsons = Gson().toJson(emotion)
+                val allMood = Gson().toJson(emotion)
                 val calculatedTopMoods = emotion.sortedByDescending { it.score }
                     .take(4)
                     .map { it.label to (it.score * 100).toInt() }
@@ -123,11 +116,11 @@ open class TodayViewModel(private val dreamDao: DreamDao) : ViewModel() {
                     userId = userId,
                     title = "Generated Dream",
                     content = content,
-                    mood = allMoodJsons,
+                    mood = allMood,
                     aiImageURL = localImagePath
                 )
                 dreamDao.insertDream(newDream)
-                dailyImages.value = dailyImages.value + localImagePath
+                dailyImages.value += localImagePath
 
                 // Save dream successfully
                 onComplete(true)
@@ -233,6 +226,7 @@ fun TodayScreen(todayViewModel: TodayViewModel, mainViewModel: MainViewModel) {
                         isGeneratingImage.value = true
                     },
                     enabled = spokenTextState.value.isNotEmpty() && spokenTextState.value != "Press the microphone to speak"
+                            && spokenTextState.value != "Didn't catch that. Please try again."
                 )
                 IconButton(
                     iconRes = icons[1].second,
@@ -292,9 +286,8 @@ fun TodayScreen(todayViewModel: TodayViewModel, mainViewModel: MainViewModel) {
             ImageGeneration(
                 prompt = spokenTextState.value,
                 onImageGenerated = { imageUrl ->
-                    Log.d("TodayScreen", "Generated Image: $imageUrl")
                     generatedImageUrl.value = imageUrl
-                    todayViewModel.dailyImages.value = todayViewModel.dailyImages.value + imageUrl
+                    todayViewModel.dailyImages.value += imageUrl
                     isGeneratingImage.value = false
                 }
             )
