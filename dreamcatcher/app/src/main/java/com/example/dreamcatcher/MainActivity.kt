@@ -2,11 +2,20 @@ package com.example.dreamcatcher
 
 import LoginScreen
 import android.app.Application
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.Manifest
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,6 +42,9 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -42,6 +54,7 @@ import com.example.dreamcatcher.screens.DisplaySettingsScreen
 import com.example.dreamcatcher.screens.DreamDetailScreen
 import com.example.dreamcatcher.screens.HomeScreen
 import com.example.dreamcatcher.screens.MapScreen
+import com.example.dreamcatcher.screens.NotificationSettingScreen
 
 import com.example.dreamcatcher.screens.SettingScreen
 import com.example.dreamcatcher.screens.TodayScreen
@@ -64,6 +77,8 @@ object AuthManager {
 class MainActivity : ComponentActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var viewModel: MainViewModel
+    private val CHANNEL_ID = "daily_reminder"
+    private val NOTIFICATION_ID = 1
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         auth = FirebaseAuth.getInstance()
@@ -74,12 +89,11 @@ class MainActivity : ComponentActivity() {
         val dreamDao = database.dreamDao()
         val factory = MainViewModelFactory(application, DataStoreManager(applicationContext))
         viewModel = ViewModelProvider(this, factory)[MainViewModel::class.java]
-
+        checkNotificationPermission()
         val todayViewModel: TodayViewModel = ViewModelProvider(
             this,
             TodayViewModelFactory(dreamDao)
         )[TodayViewModel::class.java]
-
         lifecycleScope.launch {
             viewModel.loginState.collect { (isLoggedIn, userId) ->
                 setContent {
@@ -98,6 +112,24 @@ class MainActivity : ComponentActivity() {
         }
 
     }
+
+
+    private fun checkNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (!isGranted) {
+                Toast.makeText(this, "Notification permission is required.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -271,6 +303,13 @@ fun MainApp(
                         onBack = { navController.popBackStack() }
                     )
                 }
+                composable("notification") {
+                    NotificationSettingScreen(
+                        viewModel=viewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
 
                 composable("account_screen") {
                     AccountScreen(
@@ -307,7 +346,8 @@ fun TopBar(currentRoute: String?) {
         "dreamDetail/{selectedDate}" to "Dream Detail",
         "database_testing" to "Database Testing",
         "account_screen" to "Account",
-        "display_settings" to "Display"
+        "display_settings" to "Display",
+        "notification" to "Notification"
     )
     val screenTitle = screenTitles[currentRoute] ?: "Home"
 

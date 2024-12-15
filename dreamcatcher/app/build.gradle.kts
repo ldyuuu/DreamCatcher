@@ -81,6 +81,8 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.play.services.maps)
     implementation(libs.firebase.auth.ktx)
+   // implementation(libs.androidx.ui.desktop)
+
     annotationProcessor(libs.androidx.room.room.compiler)
     ksp(libs.androidx.room.room.compiler)
     testImplementation(libs.junit)
@@ -106,7 +108,10 @@ dependencies {
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.android.gms:play-services-maps:18.1.0")
     implementation("com.google.maps.android:maps-compose:2.15.0")
+    implementation("androidx.compose.ui:ui:1.5.1")
+    implementation("androidx.compose.foundation:foundation:1.5.1")
     implementation ("androidx.work:work-runtime-ktx:2.8.0")
+   // implementation("androidx.work:work-runtime-ktx:2.8.0")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 //    implementation ("com.github.BlackSparkDev:compose-charts:1.0.0")
 

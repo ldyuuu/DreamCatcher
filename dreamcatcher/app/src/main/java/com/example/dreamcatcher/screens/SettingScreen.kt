@@ -59,7 +59,7 @@ fun SettingScreen(navController: NavController,viewModel:MainViewModel) {
                     when (action) {
                         is SettingAction.NavigateToAccount -> navController.navigate("account_screen")
                         is SettingAction.ToggleTheme -> navController.navigate("display_settings")
-                        is SettingAction.OpenNotificationSettings -> {/* Open settings */}
+                        is SettingAction.OpenNotificationSettings -> navController.navigate("notification")
                         is SettingAction.OpenTestingDialog -> navController.navigate("database_testing")
                         is SettingAction.SignOut -> {
                             viewModel.setLoginState(isLoggedIn = false, userId = null)

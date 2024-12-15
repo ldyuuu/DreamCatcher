@@ -1,20 +1,34 @@
 package com.example.dreamcatcher
 
+import android.app.AlarmManager
 import android.app.Application
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.util.Log
+import android.widget.Toast
+import androidx.lifecycle.AndroidViewModel
+
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
+import androidx.work.WorkManager
 import com.example.dreamcatcher.models.TherapyCenter
 import com.example.dreamcatcher.network.RetrofitInstance
+import com.example.dreamcatcher.tools.ReminderReceiver
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 
-open class MainViewModel(application: Application,private val dataStoreManager: DataStoreManager) : ViewModel() {
+import kotlinx.coroutines.launch
+import java.util.Calendar
+
+
+open class MainViewModel(application: Application,private val dataStoreManager: DataStoreManager) : AndroidViewModel(application) {
     private val repository: Repository
     open val allUsers: LiveData<List<User>>
     val allDreams: LiveData<List<Dream>>
@@ -55,6 +69,20 @@ open class MainViewModel(application: Application,private val dataStoreManager: 
             dataStoreManager.setLoginState(isLoggedIn, userId)
         }
 
+    }
+    private val _selectedHour = MutableStateFlow(8)
+    val selectedHour: StateFlow<Int> get() = _selectedHour
+
+    private val _selectedMinute = MutableStateFlow(0)
+    val selectedMinute: StateFlow<Int> get() = _selectedMinute
+
+    fun saveReminderTime(hour: Int, minute: Int) {
+        _selectedHour.value = hour
+        _selectedMinute.value = minute
+
+        viewModelScope.launch {
+            dataStoreManager.saveReminderTime(hour, minute)
+        }
     }
 
     private val _dreams = MutableStateFlow<List<Dream>>(emptyList())
@@ -100,7 +128,13 @@ open class MainViewModel(application: Application,private val dataStoreManager: 
             }
         }
         viewModelScope.launch {
-
+            dataStoreManager.reminderTime.collect { (hour, minute) ->
+                _selectedHour.value=hour
+                _selectedMinute.value=minute
+                scheduleNotification(getApplication<Application>().applicationContext, hour, minute)
+            }
+        }
+        viewModelScope.launch {
             dataStoreManager.isDarkModeEnabled.collect{
                 isEnabled -> _isDarkModeEnabled.value = isEnabled
             }
@@ -126,8 +160,54 @@ open class MainViewModel(application: Application,private val dataStoreManager: 
         }
     }
 
+    fun scheduleNotification(context: Context, hour: Int, minute: Int) {
+        val calendar = Calendar.getInstance().apply {
+            timeInMillis = System.currentTimeMillis()
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
+            if (timeInMillis < System.currentTimeMillis()) {
+                add(Calendar.DAY_OF_YEAR, 1) // 如果时间已过，设置到第二天
+            }
+        }
 
+        val alarmIntent = Intent(context, ReminderReceiver::class.java)
+        val pendingAlarmIntent = PendingIntent.getBroadcast(
+            context,
+            0,
+            alarmIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        if (checkExactAlarmPermission(context)) {
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                calendar.timeInMillis,
+                pendingAlarmIntent
+            )
+        } else {
+            Toast.makeText(context, "Exact Alarm Permission is required", Toast.LENGTH_SHORT).show()
+            requestExactAlarmPermission(context)
+        }
+    }
+
+    private fun checkExactAlarmPermission(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            return alarmManager.canScheduleExactAlarms()
+        }
+        return true
+    }
+
+    private fun requestExactAlarmPermission(context: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val intent = Intent().apply {
+                action = android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
+                data = Uri.parse("package:${context.packageName}")
+            }
+            context.startActivity(intent)
+        }
+    }
 
     fun setDarkModeEnabled(enabled: Boolean) {
         viewModelScope.launch {
@@ -136,7 +216,6 @@ open class MainViewModel(application: Application,private val dataStoreManager: 
     }
 
     fun syncFirebaseUserWithLocalData(firebaseUser: FirebaseUser) : User?{
-
             val email = firebaseUser.email ?: return null
             val localUser = repository.getUserByEmail(email)
 
@@ -156,8 +235,9 @@ open class MainViewModel(application: Application,private val dataStoreManager: 
             }
             _loggedInUser.value = user // 更新当前登录用户
             return user
-
     }
+
+
 
     fun updateLoggedInUser(user: User?) {
         _loggedInUser.value = user
@@ -285,6 +365,8 @@ open class MainViewModel(application: Application,private val dataStoreManager: 
             onResult(location)
         }
     }
+
+
 
 }
 
