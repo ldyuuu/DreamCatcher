@@ -3,6 +3,7 @@ package com.example.dreamcatcher
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.preferencesOf
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -20,6 +21,8 @@ class DataStoreManager(private val context: Context) {
     private val SETTINGS_KEY = stringPreferencesKey("home_screen_settings")
     private val LOGIN_STATE_KEY = booleanPreferencesKey("is_logged_in")
     private val USER_ID_KEY = stringPreferencesKey("user_id")
+    private val REMINDER_HOUR_KEY = intPreferencesKey("reminder_hour")
+    private val REMINDER_MINUTE_KEY = intPreferencesKey("reminder_minute")
 
     private val gson = Gson()
 
@@ -85,5 +88,16 @@ class DataStoreManager(private val context: Context) {
             }
         }
     }
+    suspend fun saveReminderTime(hour: Int, minute: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[REMINDER_HOUR_KEY] = hour
+            preferences[REMINDER_MINUTE_KEY] = minute
+        }
+    }
 
-}
+    val reminderTime: Flow<Pair<Int, Int>> = context.dataStore.data
+        .map { preferences ->
+            val hour = preferences[REMINDER_HOUR_KEY] ?: 9
+            val minute = preferences[REMINDER_MINUTE_KEY] ?: 0
+            hour to minute
+        }}

@@ -14,6 +14,7 @@ ksp = "1.9.0-1.0.13"
 navigationCompose = "2.8.3"
 playServicesMaps = "19.0.0"
 firebaseAuthKtx = "23.1.0"
+uiDesktop = "1.7.0"
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -37,6 +38,7 @@ androidx-runtime-livedata = { module = "androidx.compose.runtime:runtime-livedat
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
 firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth-ktx", version.ref = "firebaseAuthKtx" }
+androidx-ui-desktop = { group = "androidx.compose.ui", name = "ui-desktop", version.ref = "uiDesktop" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
