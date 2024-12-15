@@ -14,12 +14,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
-import com.example.dreamcatcher.screens.moodColors
+
+val moodColors = mapOf(
+    "joy" to Color(0xFFF2D923), // Yellow
+    "sadness" to Color(0xFF2196F3), // Blue
+    "anger" to Color(0xFFF44336), // Red
+    "neutral" to Color(0xFF7BF73E), // Green
+    "surprise" to Color(0xFFFF9800), // Orange
+    "disgust" to Color(0xFFED7F4A), // Dark red
+    "fear" to Color(0xFF673AB7) // Purple
+)
+
 
 @Composable
 fun BarChart(
     moodData: Map<String, Float>,
-    barColor: Color = MaterialTheme.colorScheme.primary,
     textColor: Color = MaterialTheme.colorScheme.onBackground,
     modifier: Modifier = Modifier
         .fillMaxWidth()
@@ -27,10 +36,10 @@ fun BarChart(
         .padding(16.dp)
 ) {
     Log.d("BarChart", "Mood Data: $moodData")
-    val moodHierarchy = listOf(
+    val moodOrder = listOf(
         "joy", "surprise", "neutral", "sadness", "anger", "disgust", "fear"
     )
-    val sortedMood = moodHierarchy.mapNotNull { mood ->
+    val sortedMood = moodOrder.mapNotNull { mood ->
         moodData[mood]?.let { mood to it }
     }
 
@@ -40,17 +49,17 @@ fun BarChart(
     val markerStep = maxScore / yAxisMarker
 
     Canvas(modifier = modifier) {
-        val totalBars = sortedMood.size
-        val barSpacingRatio = 0.2f
-        val barWidth = size.width / (totalBars + (totalBars - 1) * barSpacingRatio)
-        val barSpacing = barWidth * barSpacingRatio
+        val numBar = sortedMood.size
+        val barSpaceRatio = 0.2f
+        val barWidth = size.width / (numBar + (numBar - 1) * barSpaceRatio)
+        val barSpacing = barWidth * barSpaceRatio
 
         sortedMood.forEachIndexed { index, (label, score) ->
             val barHeight = (score / maxScore) * size.height
             val xOffset = index * (barWidth + barSpacing)
             val barColor = moodColors[label] ?: Color.Gray
 
-            // Draw Bar
+            // Draw Rectangular Bar
             drawRect(
                 color = barColor,
                 topLeft = Offset(x = xOffset, y = size.height - barHeight),
@@ -86,7 +95,6 @@ fun PieChart(
 
         val diameter = minOf(size.width, size.height)
         val chartSize = Size(diameter, diameter)
-        val center = Offset(size.width / 2f, size.height / 2f)
         var startAngle = 0f
 
         moodData.forEach { (label, value) ->
@@ -97,7 +105,7 @@ fun PieChart(
                 color = color,
                 startAngle = startAngle,
                 sweepAngle = sweepAngle,
-                useCenter = true,
+                useCenter = true, // auto determined center of the pie
                 topLeft = Offset(
                     (size.width - diameter) / 2f,
                     (size.height - diameter) / 2f
