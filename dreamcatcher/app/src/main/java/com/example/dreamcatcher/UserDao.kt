@@ -22,5 +22,8 @@ interface UserDao {
     @Query("SELECT * FROM users ORDER BY userId ASC")
     fun getAllUsers(): LiveData<List<User>>
 
+    @Query("SELECT * FROM users WHERE userId = :userId LIMIT 1")
+    suspend fun getUserById(userId: String): User?
+
 
 }

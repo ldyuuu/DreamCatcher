@@ -30,6 +30,9 @@ class Repository(private val userDao: UserDao, private val dreamDao: DreamDao) {
         }
     }
 
+    suspend fun getUserByIdSync(userId: String): User? {
+        return userDao.getUserById(userId)
+    }
     fun findUserByEmail(email: String) {
         coroutineScope.launch(Dispatchers.Main) {
             searchUserResults.value = asyncFindUser(email).await()

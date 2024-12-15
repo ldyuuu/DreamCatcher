@@ -32,7 +32,7 @@ open class MainViewModel(application: Application,private val dataStoreManager: 
         )
     )
     val settings: LiveData<Map<String, Boolean>> get() = _settings
-
+    val loginState = dataStoreManager.loginState
     fun updateSetting(key: String, value: Boolean) {
         val updatedSettings = _settings.value?.toMutableMap()?.apply {
             put(key, value)
@@ -49,6 +49,12 @@ open class MainViewModel(application: Application,private val dataStoreManager: 
         viewModelScope.launch {
             dataStoreManager.saveHomeScreenSettings(settings)
         }
+    }
+    fun setLoginState(isLoggedIn: Boolean, userId: String?) {
+        viewModelScope.launch {
+            dataStoreManager.setLoginState(isLoggedIn, userId)
+        }
+
     }
 
     private val _dreams = MutableStateFlow<List<Dream>>(emptyList())
@@ -77,14 +83,29 @@ open class MainViewModel(application: Application,private val dataStoreManager: 
         val database = DreamcatcherRoomDatabase.getInstance(application)
         val userDao = database.userDao()
         val dreamDao = database.dreamDao()
+        repository = Repository(userDao, dreamDao)
 
+        //Log.d("ViewModel", "imhere2")
         viewModelScope.launch {
+            loginState.collect { (isLoggedIn, userId) ->
+                Log.d("ViewModel", "imhere1")
+                if (isLoggedIn && userId != null) {
+                    Log.d("ViewModel", "Fetching user for ID: $userId")
+                    val user = repository.getUserByIdSync(userId)
+                    Log.d("ViewModel", "User fetched successfully: ${user?.displayName}")
+                    _loggedInUser.value = user
+                } else {
+                    _loggedInUser.value = null
+                }
+            }
+        }
+        viewModelScope.launch {
+
             dataStoreManager.isDarkModeEnabled.collect{
                 isEnabled -> _isDarkModeEnabled.value = isEnabled
             }
+            Log.d("ViewModel", "imblocked")
         }
-
-        repository = Repository(userDao, dreamDao)
 
         allUsers = repository.allUsers
         allDreams = repository.allDreams
@@ -114,10 +135,10 @@ open class MainViewModel(application: Application,private val dataStoreManager: 
         }
     }
 
-    fun syncFirebaseUserWithLocalData(firebaseUser: FirebaseUser) {
-        viewModelScope.launch {
-            val email = firebaseUser.email ?: return@launch
-            val localUser = repository.getUserByEmailSync(email)
+    fun syncFirebaseUserWithLocalData(firebaseUser: FirebaseUser) : User?{
+
+            val email = firebaseUser.email ?: return null
+            val localUser = repository.getUserByEmail(email)
 
             val user = if (localUser == null) {
                 val newUser = User(
@@ -134,7 +155,8 @@ open class MainViewModel(application: Application,private val dataStoreManager: 
                 localUser
             }
             _loggedInUser.value = user // 更新当前登录用户
-        }
+            return user
+
     }
 
     fun updateLoggedInUser(user: User?) {

@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.dreamcatcher.AuthManager
+import com.example.dreamcatcher.MainViewModel
 import com.example.dreamcatcher.R
 import com.example.dreamcatcher.ui.theme.DreamcatcherTheme
 import com.google.firebase.auth.FirebaseAuth
@@ -33,7 +34,7 @@ sealed class SettingAction {
 
 
 @Composable
-fun SettingScreen(navController: NavController) {
+fun SettingScreen(navController: NavController,viewModel:MainViewModel) {
     val settings = listOf(
         Triple("Account", R.drawable.account, SettingAction.NavigateToAccount),
         Triple("Display", R.drawable.display, SettingAction.ToggleTheme),
@@ -61,6 +62,7 @@ fun SettingScreen(navController: NavController) {
                         is SettingAction.OpenNotificationSettings -> {/* Open settings */}
                         is SettingAction.OpenTestingDialog -> navController.navigate("database_testing")
                         is SettingAction.SignOut -> {
+                            viewModel.setLoginState(isLoggedIn = false, userId = null)
                             FirebaseAuth.getInstance().signOut() // 执行退出登录
                             navController.navigate("login") {
                                 AuthManager.isLoggedIn.value = false
@@ -108,6 +110,6 @@ fun SettingRow(
 fun SettingScreenPreview() {
     val mockNavController = rememberNavController()
     DreamcatcherTheme {
-        SettingScreen(navController = mockNavController)
+       // SettingScreen(navController = mockNavController)
     }
 }

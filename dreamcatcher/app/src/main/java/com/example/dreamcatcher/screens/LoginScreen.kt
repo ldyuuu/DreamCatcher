@@ -102,7 +102,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit, viewModel: MainViewModel) {
                                         if (task.isSuccessful) {
                                             val firebaseUser = auth.currentUser
                                             firebaseUser?.let { user ->
-                                                viewModel.syncFirebaseUserWithLocalData(user)
+                                                //viewModel.syncFirebaseUserWithLocalData(user)
                                                 Toast.makeText(context, "Registered Successfully!", Toast.LENGTH_SHORT).show()
                                                 onLoginSuccess()
                                             }
@@ -135,6 +135,10 @@ fun LoginScreen(onLoginSuccess: () -> Unit, viewModel: MainViewModel) {
                                             val firebaseUser = auth.currentUser
                                             firebaseUser?.let { user ->
                                                 viewModel.syncFirebaseUserWithLocalData(user)
+                                                val localUser = viewModel.loggedInUser.value
+                                                localUser?.let { user ->
+                                                    viewModel.setLoginState(isLoggedIn = true, userId = user.userId.toString())
+                                                }
                                                 Toast.makeText(context, "Logged in Successfully!", Toast.LENGTH_SHORT).show()
                                                 onLoginSuccess()
                                             }
