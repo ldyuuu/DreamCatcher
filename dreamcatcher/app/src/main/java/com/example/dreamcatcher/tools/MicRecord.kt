@@ -34,7 +34,7 @@ fun MicRecord(
 ) {
     val context = LocalContext.current
 
-    val speechRecognizerLauncher = rememberLauncherForActivityResult(
+    val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == ComponentActivity.RESULT_OK && result.data != null) {
@@ -58,6 +58,7 @@ fun MicRecord(
                     == PackageManager.PERMISSION_GRANTED
                 ) {
                     try {
+                        // Prompt the user for speech and send it through a speech recognizer.
                         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                             putExtra(
                                 RecognizerIntent.EXTRA_LANGUAGE_MODEL, // conversational speech
@@ -67,7 +68,7 @@ fun MicRecord(
                             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US")
                             putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now...")
                         }
-                        speechRecognizerLauncher.launch(intent)
+                        launcher.launch(intent)
                     } catch (e: ActivityNotFoundException) {
                         Toast.makeText(
                             context,
