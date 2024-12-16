@@ -13,10 +13,8 @@ import androidx.lifecycle.AndroidViewModel
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
-import androidx.work.WorkManager
 import com.example.dreamcatcher.models.TherapyCenter
 import com.example.dreamcatcher.network.RetrofitInstance
 import com.example.dreamcatcher.tools.ReminderReceiver
@@ -308,20 +306,19 @@ open class MainViewModel(application: Application,private val dataStoreManager: 
 
     private suspend fun geocodeAddress(address: String, apiKey: String): Location? {
         val response = RetrofitInstance.geocodingAPI.geocode(address, apiKey)
-        val locationData = response.results.firstOrNull()?.geometry?.location
+        val location = response.results.firstOrNull()?.geometry?.location
 
-        return if (locationData != null) {
+        return if (location != null) {
             Location(
-                latitude = locationData.lat,
-                longitude = locationData.lng
+                latitude = location.lat,
+                longitude = location.lng
             )
         } else {
             null
         }
-
     }
 
-    private suspend fun findNearbyTherapies(lat: Double, lng: Double, apiKey: String): List<com.example.dreamcatcher.models.TherapyCenter> {
+    private suspend fun findNearbyTherapies(lat: Double, lng: Double, apiKey: String): List<TherapyCenter> {
         return try {
             val location = "$lat,$lng"
             val response = RetrofitInstance.placesAPI.findPlaces(
@@ -333,7 +330,7 @@ open class MainViewModel(application: Application,private val dataStoreManager: 
             )
             if (response.status == "OK" && response.results.isNotEmpty()) {
                 response.results.map { place ->
-                    com.example.dreamcatcher.models.TherapyCenter(
+                    TherapyCenter(
                         name = place.name,
                         address = place.vicinity,
                         latitude = place.geometry.location.lat,

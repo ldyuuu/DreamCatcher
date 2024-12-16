@@ -1,5 +1,6 @@
 package com.example.dreamcatcher.tools
 
+import android.graphics.Paint
 import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,7 +26,9 @@ val moodColors = mapOf(
     "fear" to Color(0xFF673AB7) // Purple
 )
 
-
+/**
+ * Bar chart
+ */
 @Composable
 fun BarChart(
     moodData: Map<String, Float>,
@@ -42,11 +45,7 @@ fun BarChart(
     val sortedMood = moodOrder.mapNotNull { mood ->
         moodData[mood]?.let { mood to it }
     }
-
     val maxScore = moodData.values.maxOrNull() ?: 1f
-    val yAxisMarker = 5
-//    val barWidth = 40.dp
-    val markerStep = maxScore / yAxisMarker
 
     Canvas(modifier = modifier) {
         val numBar = sortedMood.size
@@ -72,7 +71,7 @@ fun BarChart(
                     label,
                     xOffset + barWidth / 2,
                     size.height + 16.dp.toPx(),
-                    android.graphics.Paint().apply {
+                    Paint().apply {
                         textAlign = android.graphics.Paint.Align.CENTER
                         textSize = 12.dp.toPx()
                         color = textColor.toArgb()
@@ -84,6 +83,9 @@ fun BarChart(
 }
 
 
+/**
+ * Pie chart
+ */
 @Composable
 fun PieChart(
     moodData: Map<String, Float>,

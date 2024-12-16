@@ -28,7 +28,7 @@ sealed class SettingAction {
     object NavigateToAccount : SettingAction()
     object ToggleTheme : SettingAction()
     object OpenNotificationSettings : SettingAction()
-    object OpenTestingDialog : SettingAction()
+//    object OpenTestingDialog : SettingAction()
     object SignOut : SettingAction() // 新增 Sign Out 动作
 }
 
@@ -39,7 +39,7 @@ fun SettingScreen(navController: NavController,viewModel:MainViewModel) {
         Triple("Account", R.drawable.account, SettingAction.NavigateToAccount),
         Triple("Display", R.drawable.display, SettingAction.ToggleTheme),
         Triple("Notification", R.drawable.notification, SettingAction.OpenNotificationSettings),
-        Triple("Testing", R.drawable.testing, SettingAction.OpenTestingDialog),
+//        Triple("Testing", R.drawable.testing, SettingAction.OpenTestingDialog),
         Triple("Sign Out", R.drawable.back, SettingAction.SignOut) // 新增 Sign Out
     )
 
@@ -60,7 +60,7 @@ fun SettingScreen(navController: NavController,viewModel:MainViewModel) {
                         is SettingAction.NavigateToAccount -> navController.navigate("account_screen")
                         is SettingAction.ToggleTheme -> navController.navigate("display_settings")
                         is SettingAction.OpenNotificationSettings -> navController.navigate("notification")
-                        is SettingAction.OpenTestingDialog -> navController.navigate("database_testing")
+//                        is SettingAction.OpenTestingDialog -> navController.navigate("database_testing")
                         is SettingAction.SignOut -> {
                             viewModel.setLoginState(isLoggedIn = false, userId = null)
                             FirebaseAuth.getInstance().signOut() // 执行退出登录

@@ -183,7 +183,9 @@ fun evaluateMood(moods: Map<String, Float>): Pair<String, Boolean> {
     }
 
     return if (negativePercentage > 50f) {
-        "Based on your mood trends over the last 14 days, it seems like you've been feeling low. It might help to talk to a mental health professional for support. Use Map to find someone to talk to nearby" to false
+        "Based on your mood trends over the last 14 days, it seems like you've been feeling low. " +
+                "It might help to talk to a mental health professional for support. Use Map to find " +
+                "someone to talk to nearby" to false
     } else {
         "Great job! Over the past 14 days, your mood has been positive. Keep up the good energy!" to true
     }
