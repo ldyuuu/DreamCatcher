@@ -81,7 +81,6 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.play.services.maps)
     implementation(libs.firebase.auth.ktx)
-   // implementation(libs.androidx.ui.desktop)
 
     annotationProcessor(libs.androidx.room.room.compiler)
     ksp(libs.androidx.room.room.compiler)
@@ -111,11 +110,11 @@ dependencies {
     implementation("androidx.compose.ui:ui:1.5.1")
     implementation("androidx.compose.foundation:foundation:1.5.1")
     implementation ("androidx.work:work-runtime-ktx:2.8.0")
-   // implementation("androidx.work:work-runtime-ktx:2.8.0")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
-//    implementation ("com.github.BlackSparkDev:compose-charts:1.0.0")
 
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
+    implementation("androidx.fragment:fragment:1.6.1")
 
 
 }

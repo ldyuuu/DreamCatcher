@@ -165,7 +165,6 @@ fun MapScreen(
 
 @Composable
 fun TherapyCenterRow(center: TherapyCenter, apiKey: String, onClick: () -> Unit) {
-    val context = LocalContext.current
     val photoUrl = center.photoReference?.let {
         "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$it&key=$apiKey"
     } ?: "https://via.placeholder.com/100"
@@ -212,7 +211,6 @@ fun TherapyCenterRow(center: TherapyCenter, apiKey: String, onClick: () -> Unit)
                 )
             }
         }
-
 
         OpenMapButton(center = center)
 
@@ -275,15 +273,14 @@ fun MainViewModel.fetchTherapyCentersByLocation(
 @Composable
 fun OpenMapButton(center: TherapyCenter) {
     val context = LocalContext.current
-
     Column(
         modifier = Modifier
             .padding(4.dp)
             .clickable {
+                //geo:latitude,longitude?q=location_name for maps
                 val uri = "geo:${center.latitude},${center.longitude}?q=${center.name}"
                 val mapIntent = Intent(Intent.ACTION_VIEW, Uri.parse(uri))
-                mapIntent
-                    .resolveActivity(context.packageManager)
+                mapIntent.resolveActivity(context.packageManager)
                     ?.let {
                         context.startActivity(mapIntent)
                     } ?: Log.e("TherapyCenterRow", "No map application found")

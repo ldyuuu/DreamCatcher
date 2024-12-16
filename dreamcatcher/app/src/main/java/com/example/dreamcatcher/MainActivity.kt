@@ -2,10 +2,6 @@ package com.example.dreamcatcher
 
 import LoginScreen
 import android.app.Application
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -36,17 +32,15 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.dreamcatcher.ui.theme.DreamcatcherTheme
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.dreamcatcher.screens.AccountScreen
 import com.example.dreamcatcher.screens.CalendarScreen
@@ -60,7 +54,6 @@ import com.example.dreamcatcher.screens.SettingScreen
 import com.example.dreamcatcher.screens.TodayScreen
 import com.example.dreamcatcher.screens.TodayViewModel
 import com.example.dreamcatcher.screens.TodayViewModelFactory
-import com.example.dreamcatcher.tools.DatabaseTest
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 
@@ -218,7 +211,7 @@ fun MainApp(
             },
             bottomBar = {
                 if (currentRoute != "login") {
-                    BottomNavigationBar(navController = navController)
+                    BottomBar(navController = navController)
                 }
             }
         ) { innerPadding ->
@@ -285,14 +278,14 @@ fun MainApp(
                     SettingScreen(navController = navController,viewModel=viewModel)
                 }
 
-                composable("database_testing") {
-                    val context = LocalContext.current.applicationContext as Application
-                    val dataStoreManager = remember { DataStoreManager(context) }
-                    val mainViewModel: MainViewModel =
-                        viewModel(factory = MainViewModelFactory(context, dataStoreManager))
-
-                    DatabaseTest(navController = navController, viewModel = mainViewModel)
-                }
+//                composable("database_testing") {
+//                    val context = LocalContext.current.applicationContext as Application
+//                    val dataStoreManager = remember { DataStoreManager(context) }
+//                    val mainViewModel: MainViewModel =
+//                        viewModel(factory = MainViewModelFactory(context, dataStoreManager))
+//
+//                    DatabaseTest(navController = navController, viewModel = mainViewModel)
+//                }
 
                 composable("display_settings") {
                     DisplaySettingsScreen(
@@ -344,7 +337,7 @@ fun TopBar(currentRoute: String?) {
         "map" to "Map",
         "settings" to "Settings",
         "dreamDetail/{selectedDate}" to "Dream Detail",
-        "database_testing" to "Database Testing",
+//        "database_testing" to "Database Testing",
         "account_screen" to "Account",
         "display_settings" to "Display",
         "notification" to "Notification"
@@ -371,7 +364,7 @@ fun TopBar(currentRoute: String?) {
 
 
 @Composable
-fun BottomNavigationBar(
+fun BottomBar(
     navController: NavHostController
 ) {
     val BAUSH = FontFamily(Font(R.font.baush))
@@ -395,21 +388,20 @@ fun BottomNavigationBar(
                 selected = selected,
                 onClick = {
                     if (route == "home") {
-                        // Force reset navigation stack to home
                         navController.navigate("home") {
                             popUpTo(navController.graph.startDestinationId) {
-                                inclusive = true // Clears the back stack up to home
+                                inclusive = true // remove from back stack
                             }
-                            launchSingleTop = true // Avoids multiple home instances
-                            restoreState = false // Always reload home state
+                            launchSingleTop = true // prevent duplicate screen
+                            restoreState = false
                         }
-                    } else if (route=="settings"){
-                                navController.navigate("settings") {
-                                    popUpTo("settings") {
-                                        inclusive = true
-                                    }
-                                    launchSingleTop = true
-                                }
+                    } else if (route == "settings") {
+                        navController.navigate("settings") {
+                            popUpTo("settings") {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
                     } else if (!selected) {
                         navController.navigate(route) {
                             popUpTo(navController.graph.startDestinationId) {
@@ -428,12 +420,22 @@ fun BottomNavigationBar(
                         tint = Color.Unspecified
                     )
                 },
-                label = if (selected) null else {
-                    { Text(text = route.capitalize(), fontSize = 12.sp, fontFamily = BAUSH) }
+                label = {
+                    BoxWithConstraints {
+                        val maxWidthPx = with(LocalDensity.current) { maxWidth.toPx() }
+                        val dynamicFontSize = if (maxWidthPx < 400) 10.sp else 12.sp
+
+                        Text(
+                            text = route.replaceFirstChar { it.uppercase() },
+                            fontSize = dynamicFontSize,
+                            fontFamily = BAUSH,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 },
                 selectedContentColor = MaterialTheme.colorScheme.secondary,
                 unselectedContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
-
             )
         }
     }

@@ -13,9 +13,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.dreamcatcher.MainActivity.Companion.RC_SIGN_IN
 import com.example.dreamcatcher.MainViewModel
 import com.example.dreamcatcher.R
@@ -52,13 +56,25 @@ fun LoginScreen(onLoginSuccess: () -> Unit, viewModel: MainViewModel) {
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    "DREAMCATCHER",
-                    style = MaterialTheme.typography.h4.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = Color(0xFFDDA0DD) // 淡紫色
-                )
+                BoxWithConstraints(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    val maxWidthPx = with(LocalDensity.current) { maxWidth.toPx() }
+                    val dynamicFontSize = if (maxWidthPx < 600) 24.sp else 32.sp
+
+                    Text(
+                        "DREAMCATCHER",
+                        style = MaterialTheme.typography.h4.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = dynamicFontSize
+                        ),
+                        color = Color(0xFFDDA0DD),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -101,8 +117,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit, viewModel: MainViewModel) {
                                         isLoading = false
                                         if (task.isSuccessful) {
                                             val firebaseUser = auth.currentUser
-                                            firebaseUser?.let { user ->
-                                                //viewModel.syncFirebaseUserWithLocalData(user)
+                                            firebaseUser?.let {
                                                 Toast.makeText(context, "Registered Successfully!", Toast.LENGTH_SHORT).show()
                                                 onLoginSuccess()
                                             }
@@ -133,10 +148,9 @@ fun LoginScreen(onLoginSuccess: () -> Unit, viewModel: MainViewModel) {
                                         isLoading = false
                                         if (task.isSuccessful) {
                                             val firebaseUser = auth.currentUser
-                                            firebaseUser?.let { user ->
-                                                viewModel.syncFirebaseUserWithLocalData(user)
-                                                val localUser = viewModel.loggedInUser.value
-                                                localUser?.let { user ->
+                                            firebaseUser?.let {
+                                                viewModel.syncFirebaseUserWithLocalData(it)
+                                                viewModel.loggedInUser.value?.let { user ->
                                                     viewModel.setLoginState(isLoggedIn = true, userId = user.userId.toString())
                                                 }
                                                 Toast.makeText(context, "Logged in Successfully!", Toast.LENGTH_SHORT).show()
