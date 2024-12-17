@@ -395,13 +395,14 @@ fun BottomBar(
                             launchSingleTop = true // prevent duplicate screen
                             restoreState = false
                         }
-                    } else if (route == "settings") {
-                        navController.navigate("settings") {
-                            popUpTo("settings") {
-                                inclusive = true
-                            }
-                            launchSingleTop = true
-                        }
+//                    } else if (route == "settings") {
+//                        navController.navigate("settings") {
+//                            popUpTo("settings") {
+//                                inclusive = true
+//                            }
+//                            launchSingleTop = true
+//                            restoreState = false
+//                        }
                     } else if (!selected) {
                         navController.navigate(route) {
                             popUpTo(navController.graph.startDestinationId) {

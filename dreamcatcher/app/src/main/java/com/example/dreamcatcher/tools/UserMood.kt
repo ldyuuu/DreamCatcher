@@ -176,6 +176,10 @@ fun evaluateMood(moods: Map<String, Float>): Pair<String, Boolean> {
     val totalNegativeScore = moods.filterKeys { it in negativeMoods }.values.sum()
     val totalScore = moods.values.sum()
 
+    if (moods.isEmpty()){
+        return "Log your mood to get a status update" to true
+    }
+
     val negativePercentage = if (totalScore > 0) {
         totalNegativeScore / totalScore * 100
     } else {
