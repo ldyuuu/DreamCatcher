@@ -1,6 +1,6 @@
 # DreamCatcher
 **DreamCatcher** is an innovative app designed to help users record, analyze, and explore their dreams. After waking up, users can log their dream content, which the app uses AI to analyze. It extracts keywords, recognizes emotions, and generates artistic images, enabling users to uncover patterns in their subconscious. Additionally, the app allows users to create a "Dream Gallery," transforming dreams into unique, visual stories.
-
+see Presentation slides on https://docs.google.com/presentation/d/1reOC9Fgw7CHehw0qVLihGBr-dDyCC9MHhkcMg5sCmdY/
 ---
 
 ## Table of Contents

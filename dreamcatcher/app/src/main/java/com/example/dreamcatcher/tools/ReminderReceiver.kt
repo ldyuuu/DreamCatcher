@@ -39,7 +39,7 @@ class ReminderReceiver : BroadcastReceiver() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .build()
-        
+
         try {
             val notificationManager = NotificationManagerCompat.from(context)
             notificationManager.notify(NOTIFICATION_ID, notification)
