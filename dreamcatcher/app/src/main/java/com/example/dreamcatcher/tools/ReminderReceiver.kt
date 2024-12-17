@@ -23,7 +23,6 @@ class ReminderReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         Log.d("ReminderReceiver", "Alarm triggered at ${System.currentTimeMillis()}")
-        // 检查是否有 POST_NOTIFICATIONS 权限
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) {
@@ -31,10 +30,8 @@ class ReminderReceiver : BroadcastReceiver() {
             return
         }
 
-        // 创建通知渠道（确保存在）
         createNotificationChannel(context)
 
-        // 创建通知
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.dream)
             .setContentTitle("Daily Dream Reminder")
@@ -42,8 +39,7 @@ class ReminderReceiver : BroadcastReceiver() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .build()
-
-        // 发送通知
+        
         try {
             val notificationManager = NotificationManagerCompat.from(context)
             notificationManager.notify(NOTIFICATION_ID, notification)
