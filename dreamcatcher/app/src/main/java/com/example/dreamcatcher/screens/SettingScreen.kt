@@ -43,6 +43,7 @@ fun SettingScreen(navController: NavController,viewModel:MainViewModel) {
         Triple("Sign Out", R.drawable.back, SettingAction.SignOut) // 新增 Sign Out
     )
 
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()

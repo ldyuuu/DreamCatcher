@@ -118,8 +118,9 @@ fun LoginScreen(onLoginSuccess: () -> Unit, viewModel: MainViewModel) {
                                         if (task.isSuccessful) {
                                             val firebaseUser = auth.currentUser
                                             firebaseUser?.let {
+                                                viewModel.syncFirebaseUserWithLocalData(it)
                                                 Toast.makeText(context, "Registered Successfully!", Toast.LENGTH_SHORT).show()
-                                                onLoginSuccess()
+//                                                onLoginSuccess()
                                             }
                                         } else {
                                             errorMessage = task.exception?.message
